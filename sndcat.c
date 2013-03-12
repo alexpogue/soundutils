@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include "fileUtils.h"
 
+void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType);
+
 int main(int argc, char** argv) {
   if(argc < 2) {
     /* read from stdin */
@@ -53,10 +55,37 @@ int main(int argc, char** argv) {
       }
       sounds[i] = loadSound(fp, fileNames[i]);
       fclose(fp);
-      if(i > 0) {
-        /*TO BE IMPLEMENTED*/
-        /*concatenateSounds(sounds[i-1], sounds[i]); */
+      if(i >= 1) {
+        /*concatenateSounds(sounds[i-1], sounds[i]);*/
       }
     }
+  }
   return 0;
+}
+
+/* concatenate sounds and store the concatenated sound into dest. Use the
+  format specified by resultType */
+void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType) {
+  /* convert both to resultType */
+  if(s1->sampleRate != s2->sampleRate) {
+    /* print incompatible sample rate error */
+  }
+  if(s1->bitDepth > s2->bitDepth) {
+    /* scale s2's samples to that of s1's */
+  }
+  else if(s1->bitDepth < s2->bitDepth) {
+    /*scale s1's samples to that of s2's */
+  }
+  if(s1->numChannels > s2->numChannels) {
+    /* fill in 0's in s2 until they are equal */
+  }
+  else if(s1->numChannels < s2->numChannels) {
+    /* fill in 0's in s1 until they are equal */
+  }
+  /* concatenate rawData */
+  dest->bitDepth = s1->bitDepth;
+  dest->sampleRate = s1->sampleRate;
+  dest->fileType = resultType;
+  dest->numChannels = s1->numChannels;
+  dest->dataSize = s1->dataSize + s2->dataSize;
 }
