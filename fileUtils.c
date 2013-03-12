@@ -102,6 +102,27 @@ void getFileType(FILE* file, sound_t* sound) {
   return;
 }
 
+void cs229ToWave(sound_t* sound) {
+  if(sound->fileType == WAVE) {
+    /* already correct type */
+    return;
+  }
+  if(sound->bitDepth == 8) {
+    /* convert samples to unsigned */
+  }
+  sound->fileType = WAVE;
+}
+
+void waveToCs229(sound_t* sound) {
+  if(sound->fileType == CS229) {
+    /* already correct type */
+    return;
+  }
+  if(sound->bitDepth == 8) {
+    /* convert samples to signed */
+  }
+  /* trim MIN_VALUE samples to MIN_VALUE + 1 (ex. -128 samples to -127, -32768 to -32767, etc.) */
+}
 unsigned int calculateNumSamples(sound_t* sound) {
   if(sound->error != NO_ERROR 
       || sound->numChannels == 0 
