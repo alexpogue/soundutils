@@ -5,7 +5,7 @@
 #include "fileTypes.h"
 
 sound_t* loadSound(FILE* file, char* fileName); 
-sound_t* loadEmptySound(char* fileName);
+sound_t* loadEmptySound();
 void unloadSound(sound_t* sound);
 void getFileType(FILE* file, sound_t* sound);
 unsigned int calculateNumSamples(sound_t* sound);

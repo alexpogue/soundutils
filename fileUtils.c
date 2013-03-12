@@ -12,20 +12,13 @@
   Returns an allocated but empty sound_t*. Must manually call methods to 
   extract file data into the sound_t*. Returns NULL on memory error. 
 */
-sound_t* loadEmptySound(char* fileName) {
+sound_t* loadEmptySound() {
   sound_t* sp = (sound_t*) malloc(sizeof(sound_t));
   if(!sp) {
     return NULL;
   }
   sp->error = NO_ERROR;
   sp->dataSize = 0;
-  sp->fileName = (char*) malloc(strlen(fileName) + 1);
-  if(!sp->fileName) {
-    free(sp);
-    return NULL;
-  }
-  strcpy(sp->fileName, fileName);
-  
   return sp;
 }
 
@@ -34,10 +27,18 @@ sound_t* loadEmptySound(char* fileName) {
   sound on error. Returns NULL on memory allocation error. 
 */
 sound_t* loadSound(FILE* file, char* fileName) {
-  sound_t* sp = loadEmptySound(fileName);
+  sound_t* sp = loadEmptySound();
   if(!sp) {
     return NULL;
   }
+
+  sp->fileName = (char*)malloc(strlen(fileName + 1));
+  if(!sp->fileName) {
+    free(sp);
+    return NULL;
+  }
+  strcpy(sp->fileName, fileName);
+
   getFileType(file, sp);
   if(sp->error != NO_ERROR) {
     return sp;
@@ -55,7 +56,9 @@ void unloadSound(sound_t* sound) {
   if(sound->error != ERROR_MEMORY && sound->rawData != NULL && sound->dataSize == 0) {
     free(sound->rawData);
   }
-  free(sound->fileName);
+  if(sound->fileName != NULL) {
+    free(sound->fileName);
+  }
   free(sound);
 }
 
