@@ -1,5 +1,14 @@
-all: sndinfo.o fileUtils.o fileReader.o errorPrinter.o waveUtils.o cs229Utils.o
+all: sndcat sndinfo
+
+sndcat: sndcat.o fileUtils.o cs229Utils.o fileReader.o waveUtils.o
+	gcc sndcat.o fileUtils.o cs229Utils.o fileReader.o waveUtils.o -o sndcat
+
+sndinfo: sndinfo.o fileUtils.o fileReader.o errorPrinter.o waveUtils.o cs229Utils.o
 	gcc sndinfo.o fileUtils.o fileReader.o errorPrinter.o waveUtils.o cs229Utils.o -o sndinfo
+
+
+sndcat.o: sndcat.c fileUtils.h
+	gcc -Wall -pedantic -c sndcat.c
 
 sndinfo.o: sndinfo.c fileUtils.h fileTypes.h readError.h errorPrinter.h
 	gcc -Wall -pedantic -c sndinfo.c
