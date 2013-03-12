@@ -382,7 +382,7 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
     }
     length = strlen(dataStr);
     lastChar = dataStr[length-1];
-    if(lastChar != ' ' && lastChar != '\t' && lastChar != '\n' && lastChar != EOF) {
+    if(lastChar != ' ' && lastChar != '\t' && lastChar != '\n') {
       return CS229_ERROR_INVALID_VALUE;
     }
     dataStr[length-1] = 0;
@@ -414,10 +414,10 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
         return CS229_ERROR_INVALID_VALUE;
     }
   }
-  if(lastChar != '\n' && lastChar != EOF) {
+  if(lastChar != '\n') {
     error = ignoreLine(fp);
   }
-  if(lastChar == EOF || error == ERROR_EOF) {
+  if(error == ERROR_EOF) {
     /* eof error is OK, we just handled the final sample*/
     return CS229_DONE_READING;
   }
