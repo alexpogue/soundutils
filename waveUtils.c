@@ -103,6 +103,7 @@ void wavToSound(wavData_t* wd, sound_t* sound) {
   sound->numChannels = wd->numChannels;
   sound->dataSize = wd->dataChunkSize;
   sound->error = wd->error;
+  sound->rawData = wd->data;
 }   
 
 void wavReadFmtChunk(FILE* fp, wavData_t* wd) {

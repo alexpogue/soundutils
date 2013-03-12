@@ -125,13 +125,12 @@ void cs229Read(FILE* fp, sound_t* sound) {
     return;
   }
   cData->data = malloc(calculateDataSize(cData));
-  /* make this be able to read in and store the samples! */
   sampleReadStatus = readSamples(cData, fp);
   if(sampleReadStatus != CS229_DONE_READING && sampleReadStatus != CS229_NO_ERROR) {
     sound->error = ERROR_SAMPLE_DATA;
     return;
   }
-
+  
   cs229ToSound(cData, sound);
   free(cData);
 }
@@ -141,6 +140,7 @@ void cs229ToSound(cs229Data_t* cd, sound_t* sound) {
   sound->numChannels = cd->numChannels;
   sound->bitDepth = cd->bitres;
   sound->dataSize = calculateDataSize(cd);
+  sound->rawData = cd->data;
 }
 
 unsigned int calculateDataSize(cs229Data_t* cd) {
