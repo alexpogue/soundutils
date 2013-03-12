@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 
 /** 
   Returns an allocated but empty sound_t*. Must manually call methods to 
@@ -104,6 +105,7 @@ void getFileType(FILE* file, sound_t* sound) {
 }
 
 void cs229ToWave(sound_t* sound) {
+  char* charData = (char*)sound->rawData;
   if(sound->fileType == WAVE) {
     /* already correct type */
     return;
@@ -111,8 +113,7 @@ void cs229ToWave(sound_t* sound) {
   if(sound->bitDepth == 8) {
     /* convert to unsigned, cs229 allows -127 to 127, wav (bit depth of 8) allows 0-255 */
     int i;
-    char* charData = (char*)sound->rawData;
-    for(i = 0; i < calculateNumSamples(sound_t* sound); i++) {
+    for(i = 0; i < calculateNumSamples(sound); i++) {
       charData[i] += 128;
     }
   }
@@ -121,24 +122,26 @@ void cs229ToWave(sound_t* sound) {
 
 void waveToCs229(sound_t* sound) {
   int i;
+  signed char* charData = (signed char*)sound->rawData;
   if(sound->fileType == CS229) {
     /* already correct type */
     return;
   }
   if(sound->bitDepth == 8) {
     /* convert samples to signed */
-    char* charData = (char*)sound->rawData;
-    for(i = 0; i < calculateNumSamples(sound_t* sound); i++) {
+    for(i = 0; i < calculateNumSamples(sound); i++) {
       charData[i] -= 128;
     }
   }
   /* trim MIN_VALUE samples to MIN_VALUE + 1 (ex. -128 samples to -127, -32768 to -32767, etc.) */
-  for(i = 0; i < calculateNumSamples(sound_t* sound); i++) {
-    if( (bitDepth == 8 && charData[i] == -128)
-      || (bitDepth == 16 && charData[i] == -32768)
-      || (bitDepth == 32 && charData[i] == -2147483648) ) {
+  for(i = 0; i < calculateNumSamples(sound); i++) {
+    if( (sound->bitDepth == 8 && charData[i] == -128)
+      || (sound->bitDepth == 16 && charData[i] == -32768)
+      || (sound->bitDepth == 32 && charData[i] < -2147483647) ) {
       charData[i] += 1;
     }
+  }
+  sound->fileType = CS229;
 }
 
 unsigned int calculateNumSamples(sound_t* sound) {
