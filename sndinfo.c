@@ -29,6 +29,7 @@ int main(int argc, char* argv[]) {
   if(argc < 2) {
     char* stdinFileName = "standard input file";
     sound_t* stdinSound = loadSound(stdin, stdinFileName);
+    printf("\n");
     if(!stdinSound) {
       printMemoryError();
       exit(1);
@@ -123,7 +124,7 @@ void printSoundDetails(sound_t* sound) {
   printf("Bit depth: %d\n", sound->bitDepth);
   printf("Number of channels: %d\n", sound->numChannels);
   printf("Number of samples: %d\n", calculateNumSamples(sound));
-  printf("Sound length (seconds): %f\n", calculateSoundLength(sound));
+  printf("Sound length (seconds): %.3f\n", calculateSoundLength(sound));
 }
 
 void printUsage(char* exeName) {

@@ -15,8 +15,6 @@ typedef enum {
   KEYWORD_BADVALUE
 } keyword_t;
 
-/* TODO: use this or get rid of it, in order to use, must main know about it?
-  if so, don't use it. adds extra complexity. */
 typedef enum {
   CS229_NO_ERROR,
   CS229_DONE_READING,
@@ -129,7 +127,7 @@ void cs229Read(FILE* fp, sound_t* sound) {
   cData->data = malloc(calculateDataSize(cData));
   /* make this be able to read in and store the samples! */
   sampleReadStatus = readSamples(cData, fp);
-  if(sampleReadStatus != CS229_NO_ERROR) {
+  if(sampleReadStatus != CS229_DONE_READING && sampleReadStatus != CS229_NO_ERROR) {
     sound->error = ERROR_SAMPLE_DATA;
     return;
   }
@@ -359,11 +357,13 @@ readError_t readUntilWhitespace(char* str, size_t n, FILE* file) {
   return NO_ERROR;
 }
 
+/* TODO: go through this method with paper and pencil and clean it */
 cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
   int i;
   readError_t error;
   /* to hold "-2147483647"(11), + additional char to ensure validity, + '\0' */
-  char dataStr[13], length, lastChar, valChar, *afterNumber; 
+  char dataStr[13], length, valChar, *afterNumber; 
+  unsigned char lastChar;
   short valShort;
   long valLong;
 
@@ -374,8 +374,8 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
   for(i = 0; i < (cd->numChannels); i++) {
     error = readUntilWhitespace(dataStr, 13, fp);
     /* it might be okay to reach eof after the final channel is read */
-    if(error == ERROR_EOF && i != cd->numChannels - 1) {
-      return CS229_ERROR_EOF;
+    if(error == ERROR_EOF) {
+      return CS229_DONE_READING;
     }
     if(error == ERROR_READING) {
       return CS229_ERROR_READING;
@@ -383,8 +383,6 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
     length = strlen(dataStr);
     lastChar = dataStr[length-1];
     if(lastChar != ' ' && lastChar != '\t' && lastChar != '\n' && lastChar != EOF) {
-      printf("lastChar = %d\n", lastChar);
-          printf("hit invalid value!\n");
       return CS229_ERROR_INVALID_VALUE;
     }
     dataStr[length-1] = 0;
@@ -433,13 +431,8 @@ cs229ReadStatus_t readSamples(cs229Data_t* cd, FILE* fp) {
   int i;
   cs229ReadStatus_t status = CS229_NO_ERROR;
   for(i = 0; status == CS229_NO_ERROR; i += cd->numChannels) {
-    printf("interator = %d\n", i);
     status = readSample(cd, i, fp);
   }
-  printf("i = %d\n", i);
-  printf("status code = %d\n", status);
-  if(status == CS229_DONE_READING) {
-      printf("numSamples: %d; and samples: %d", cd->numSamples, i+1);
-  }
-  return CS229_NO_ERROR;
+  cd->numSamples = i-1;
+  return status;
 }
