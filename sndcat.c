@@ -53,14 +53,10 @@ int main(int argc, char** argv) {
       }
       sounds[i] = loadSound(fp, fileNames[i]);
       fclose(fp);
+      if(i > 0) {
+        /*TO BE IMPLEMENTED*/
+        /*concatenateSounds(sounds[i-1], sounds[i]); */
+      }
     }
-    char* data = (char*)sounds[0]->rawData;
-    /*
-    for(i = 0; i < calculateNumSamples(sounds[0]); i++) {
-      printf("here!\n");
-      printf("%d\n", data[0]);
-    }
-    */
-  }
   return 0;
 }
