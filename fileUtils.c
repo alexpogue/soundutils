@@ -99,6 +99,7 @@ void getFileType(FILE* file, sound_t* sound) {
       sound->error = ERROR_FILETYPE;
     }
   }
+  /* trim MIN_VALUE samples to MIN_VALUE + 1 (ex. -128 samples to -127, -32768 to -32767, etc.) */
   return;
 }
 
@@ -108,21 +109,38 @@ void cs229ToWave(sound_t* sound) {
     return;
   }
   if(sound->bitDepth == 8) {
-    /* convert samples to unsigned */
+    /* convert to unsigned, cs229 allows -127 to 127, wav (bit depth of 8) allows 0-255 */
+    int i;
+    char* charData = (char*)sound->rawData;
+    for(i = 0; i < calculateNumSamples(sound_t* sound); i++) {
+      charData[i] += 128;
+    }
   }
   sound->fileType = WAVE;
 }
 
 void waveToCs229(sound_t* sound) {
+  int i;
   if(sound->fileType == CS229) {
     /* already correct type */
     return;
   }
   if(sound->bitDepth == 8) {
     /* convert samples to signed */
+    char* charData = (char*)sound->rawData;
+    for(i = 0; i < calculateNumSamples(sound_t* sound); i++) {
+      charData[i] -= 128;
+    }
   }
   /* trim MIN_VALUE samples to MIN_VALUE + 1 (ex. -128 samples to -127, -32768 to -32767, etc.) */
+  for(i = 0; i < calculateNumSamples(sound_t* sound); i++) {
+    if( (bitDepth == 8 && charData[i] == -128)
+      || (bitDepth == 16 && charData[i] == -32768)
+      || (bitDepth == 32 && charData[i] == -2147483648) ) {
+      charData[i] += 1;
+    }
 }
+
 unsigned int calculateNumSamples(sound_t* sound) {
   if(sound->error != NO_ERROR 
       || sound->numChannels == 0 
