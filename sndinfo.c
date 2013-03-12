@@ -24,6 +24,11 @@ void printSoundDetails(sound_t* sound);
 */
 void printUsage(char* exeName);
 
+/**
+  Prints help screen.
+*/
+void printHelp(char* exeName);
+
 int main(int argc, char* argv[]) {
   int i;
   if(argc < 2) {
@@ -46,7 +51,7 @@ int main(int argc, char* argv[]) {
     for(i = 1; i < argc; i++) {
       if('-' == argv[i][0]) {
         if('h' == argv[i][1]) {
-          printUsage(argv[0]);
+          printHelp(argv[0]);
           exit(0);
         }
         else {
@@ -130,6 +135,15 @@ void printSoundDetails(sound_t* sound) {
 void printUsage(char* exeName) {
   printf("Usage: %s [filename]\n", exeName);
 }
+
+void printHelp(char* exeName) {
+  printf("Sndinfo Help: \n");
+  printUsage(exeName);
+  printf("This program reads each wav and CS229 sound file passed as\n");
+  printf("arguments and outputs their information:\n");
+  printf("Flags: \n");
+  printf("-h\tdisplays this help page\n");
+} 
 
 void fileTypeToString(char* str, fileType_t type) {
   if(type == WAVE) {
