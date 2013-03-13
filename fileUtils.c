@@ -34,7 +34,7 @@ sound_t* loadSound(FILE* file, char* fileName) {
     return NULL;
   }
 
-  sp->fileName = (char*)malloc(strlen(fileName + 1));
+  sp->fileName = (char*)malloc(strlen(fileName) + 1);
   if(!sp->fileName) {
     free(sp);
     return NULL;
@@ -264,4 +264,33 @@ unsigned int calculateByteRate(sound_t* sound) {
 float calculateSoundLength(sound_t* sound) {
   if(sound->error != NO_ERROR || calculateByteRate(sound) == 0) return 0;
   return (float)sound->dataSize / calculateByteRate(sound);
+}
+
+/*TODO: TEST */
+void printData(sound_t* sound) {
+  int i;
+  if(sound->bitDepth == 8 && sound->fileType == CS229) {
+    char* charData = (char*)sound->rawData;
+    for(i = 0; i < calculateNumSamples(sound) + sound->numChannels; i++) {
+      printf("%d:\t\t%d\n", i, charData[i]);
+    }
+  }
+  else if(sound->bitDepth == 8 && sound->fileType == WAVE) {
+    unsigned char* uCharData = (unsigned char*)sound->rawData;
+    for(i = 0; i < calculateNumSamples(sound) + sound->numChannels; i++) {
+      printf("%d:\t\t%d\n", i, uCharData[i]);
+    }
+  } 
+  else if(sound->bitDepth == 16) {
+    short* shortData = (short*)sound->rawData;
+    for(i = 0; i < calculateNumSamples(sound) + sound->numChannels; i++) {
+      printf("%d:\t\t%d\n", i, shortData[i]);
+    }
+  }
+  else if(sound->bitDepth == 32) {
+    long* longData = (long*)sound->rawData;
+    for(i = 0; i < calculateNumSamples(sound) + sound->numChannels; i++) {
+      printf("%d:\t\t%ld\n", i, longData[i]);
+    }
+  }
 }
