@@ -99,10 +99,18 @@ void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resul
   dest->sampleRate = s1->sampleRate;
   dest->fileType = resultType;
   dest->numChannels = s1->numChannels;
-  dest->dataSize = s1->dataSize + s2->dataSize;
 }
 
 void concatenateData(sound_t* s1, sound_t* s2, sound_t* dest) {
+  int i;
+  char *s1CharData, *s2CharData, *destCharData;
+  int newDataSize = s1->dataSize + s2->dataSize;
+  /* we can access these as chars because we are only writing them */
+  char* newData = (char*)realloc(dest->rawData, newDataSize);
+  if(!newData) {
+    fprintf(stderr, "Malloc failed\n");
+  }
+  dest->rawData = newData;
   if(s1->fileType != s2->fileType 
     || s1->sampleRate != s2->sampleRate 
     || s1->bitDepth != s2->bitDepth
@@ -110,5 +118,13 @@ void concatenateData(sound_t* s1, sound_t* s2, sound_t* dest) {
     /* TODO: REMOVE THIS TEST PRINT */
     printf("We cannot cat these two sounds!\n");
   }
-    
+  s1CharData = (char*)s1->rawData;
+  s2CharData = (char*)s2->rawData;
+  destCharData = (char*)dest->rawData;
+  for(i = 0; i < s1->dataSize; i++) {
+    destCharData[i] = s1CharData[i];
+  }
+  for(i = 0; i < s2->dataSize; i++) {
+    destCharData[i + s1->dataSize] = s2CharData[i];
+  }
 }
