@@ -163,7 +163,27 @@ float ipow(int base, int exp) {
 
 void scaleBitDepth(int target, sound_t* sound) {
   float sampleMultiplier = ipow(2, target) / ipow(2, sound->bitDepth);
-  sound->bitDepth *= sampleMultiplier;
+  int i;
+  int numDataElements = calculateNumSamples(sound) * sound->numChannels;
+  if(sound->bitDepth == 8) {
+    char* charData = (char*)sound->rawData;
+    for(i = 0; i < numDataElements; i++) {
+      charData[i] *= sampleMultiplier;
+    }
+  }
+  else if(sound->bitDepth == 16) {
+    short* shortData = (short*)sound->rawData;
+    for(i = 0; i < numDataElements; i++) {
+      shortData[i] *= sampleMultiplier;
+    }
+  }
+  else if(sound->bitDepth == 32) {
+    long* longData = (long*)sound->rawData;
+    for(i = 0; i < numDataElements; i++) {
+      longData[i] *= sampleMultiplier;
+    }
+  }
+  sound->bitDepth = target;
 }
 
 void addZeroedChannels(int howMany, sound_t* sound) {
