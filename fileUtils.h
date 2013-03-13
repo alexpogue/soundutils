@@ -10,6 +10,7 @@ void unloadSound(sound_t* sound);
 void getFileType(FILE* file, sound_t* sound);
 void cs229ToWave(sound_t* sound);
 void waveToCs229(sound_t* sound);
+void scaleBitDepth(int target, sound_t* sound);
 unsigned int calculateNumSamples(sound_t* sound);
 float calculateSoundLength(sound_t* sound);
 

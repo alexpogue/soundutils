@@ -144,6 +144,27 @@ void waveToCs229(sound_t* sound) {
   sound->fileType = CS229;
 }
 
+float ipow(int base, int exp) {
+  int i; 
+  float origBase, fBase;
+  fBase = origBase = (float)base;
+  if(exp < 0 ) {
+    return 0;
+  }
+  if(exp == 0) {
+    return 1;
+  }
+  for(i = 0; i < exp; i++) {
+    fBase *= origBase;
+  }
+  return fBase;
+}
+
+void scaleBitDepth(int target, sound_t* sound) {
+  float sampleMultiplier = ipow(2, target) / ipow(2, sound->bitDepth);
+  sound->bitDepth *= sampleMultiplier;
+}
+
 unsigned int calculateNumSamples(sound_t* sound) {
   if(sound->error != NO_ERROR 
       || sound->numChannels == 0 

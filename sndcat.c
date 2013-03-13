@@ -67,14 +67,22 @@ int main(int argc, char** argv) {
   format specified by resultType */
 void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType) {
   /* convert both to resultType */
+  if(resultType == CS229) {
+    waveToCs229(s1);
+    waveToCs229(s2);
+  }
+  else if(resultType == WAVE) {
+    cs229ToWave(s1);
+    cs229ToWave(s2);
+  }
   if(s1->sampleRate != s2->sampleRate) {
     /* print incompatible sample rate error */
   }
-  if(s1->bitDepth > s2->bitDepth) {
-    /* scale s2's samples to that of s1's */
+  if(s1->bitDepth > s2->bitDepth) {    
+    scaleBitDepth(s1->bitDepth, s2);
   }
   else if(s1->bitDepth < s2->bitDepth) {
-    /*scale s1's samples to that of s2's */
+    scaleBitDepth(s2->bitDepth, s1);
   }
   if(s1->numChannels > s2->numChannels) {
     /* fill in 0's in s2 until they are equal */
