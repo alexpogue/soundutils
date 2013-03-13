@@ -77,6 +77,7 @@ void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resul
   }
   if(s1->sampleRate != s2->sampleRate) {
     /* print incompatible sample rate error */
+    return;
   }
   if(s1->bitDepth > s2->bitDepth) {    
     scaleBitDepth(s1->bitDepth, s2);
@@ -85,10 +86,10 @@ void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resul
     scaleBitDepth(s2->bitDepth, s1);
   }
   if(s1->numChannels > s2->numChannels) {
-    /* fill in 0's in s2 until they are equal */
+    addZeroedChannels(s1->numChannels - s2->numChannels, s2);
   }
   else if(s1->numChannels < s2->numChannels) {
-    /* fill in 0's in s1 until they are equal */
+    addZeroedChannels(s2->numChannels - s1->numChannels, s1);
   }
   /* concatenate rawData */
   dest->bitDepth = s1->bitDepth;
@@ -97,3 +98,4 @@ void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resul
   dest->numChannels = s1->numChannels;
   dest->dataSize = s1->dataSize + s2->dataSize;
 }
+

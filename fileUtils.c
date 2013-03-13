@@ -165,6 +165,62 @@ void scaleBitDepth(int target, sound_t* sound) {
   sound->bitDepth *= sampleMultiplier;
 }
 
+void addZeroedChannels(int howMany, sound_t* sound) {
+  int i, j, k, newLastIndex;
+  int newNumChannels = sound->numChannels + howMany;
+  int numAdditionalData = howMany * calculateNumSamples(sound);
+  int newSize = sound->dataSize + numAdditionalData * sound->bitDepth / 8;
+  void* newData = realloc(sound->rawData, newSize);
+  if(!newData) {
+    sound->error = ERROR_MEMORY;
+    return;
+  }
+  sound->rawData = newData;
+
+  newLastIndex = calculateNumSamples(sound) * sound->numChannels + numAdditionalData - 1;
+  j = calculateNumSamples(sound);
+  if(sound->bitDepth == 8 && sound->fileType == WAVE) {
+    unsigned char* uCharData = (unsigned char*)sound->rawData;
+    for(i = newLastIndex - sound->numChannels; i >= 0; i-=(sound->numChannels+1) ) {
+      uCharData[i] = 128;
+      for(k = 1; k <= sound->numChannels; k++) {
+        uCharData[i+k] = uCharData[--j];
+      }
+    }
+  }
+  else if(sound->bitDepth == 8 && sound->fileType == CS229) {
+    signed char* charData = (signed char*)sound->rawData;
+    for(i = newLastIndex - sound->numChannels; i >= 0; i-=(sound->numChannels+1) ) {
+      charData[i] = 0;
+      for(k = 1; k <= sound->numChannels; k++) {
+        charData[i+k] = charData[--j];
+      }
+    }
+  }
+  else if(sound->bitDepth == 16) {
+    short* shortData = (short*)sound->rawData;
+    for(i = newLastIndex - sound->numChannels; i >= 0; i-=(sound->numChannels+1) ) {
+      shortData[i] = 0;
+      for(k = 1; k <= sound->numChannels; k++) {
+        shortData[i+k] = shortData[--j];
+      }
+    }
+  }
+  else if(sound->bitDepth == 32) {
+    long* longData = (long*)sound->rawData;
+    for(i = newLastIndex - sound->numChannels; i >= 0; i-=(sound->numChannels+1) ) {
+      longData[i] = 0;
+      for(k = 1; k <= sound->numChannels; k++) {
+        longData[i+k] = longData[--j];
+      }
+    }
+  }
+  else {
+    sound->error = ERROR_BIT_DEPTH;
+  }
+  sound->numChannels = newNumChannels;
+}    
+
 unsigned int calculateNumSamples(sound_t* sound) {
   if(sound->error != NO_ERROR 
       || sound->numChannels == 0 
