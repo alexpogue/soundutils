@@ -430,8 +430,8 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
 cs229ReadStatus_t readSamples(cs229Data_t* cd, FILE* fp) {
   int i;
   cs229ReadStatus_t status = CS229_NO_ERROR;
-  for(i = 0; status == CS229_NO_ERROR; i += cd->numChannels) {
-    status = readSample(cd, i, fp);
+  for(i = 0; status == CS229_NO_ERROR; i++) {
+    status = readSample(cd, i * cd->numChannels, fp);
   }
   cd->numSamples = i-1;
   return status;
