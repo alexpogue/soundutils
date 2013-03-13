@@ -19,6 +19,7 @@ sound_t* loadEmptySound() {
     return NULL;
   }
   sp->error = NO_ERROR;
+  sp->rawData = NULL;
   sp->dataSize = 0;
   return sp;
 }

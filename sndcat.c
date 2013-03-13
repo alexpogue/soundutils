@@ -59,6 +59,9 @@ int main(int argc, char** argv) {
         /*concatenateSounds(sounds[i-1], sounds[i]);*/
       }
     }
+    for(i = 0; i < numFiles; i++) {
+      unloadSound(sounds[i]);
+    }
   }
   return 0;
 }
@@ -76,7 +79,7 @@ void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resul
     cs229ToWave(s2);
   }
   if(s1->sampleRate != s2->sampleRate) {
-    /* print incompatible sample rate error */
+    fprintf(stderr, "Incompatible sample rate error\n");
     return;
   }
   if(s1->bitDepth > s2->bitDepth) {    
@@ -99,3 +102,13 @@ void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resul
   dest->dataSize = s1->dataSize + s2->dataSize;
 }
 
+void concatenateData(sound_t* s1, sound_t* s2, sound_t* dest) {
+  if(s1->fileType != s2->fileType 
+    || s1->sampleRate != s2->sampleRate 
+    || s1->bitDepth != s2->bitDepth
+    || s1->numChannels != s2->numChannels) {
+    /* TODO: REMOVE THIS TEST PRINT */
+    printf("We cannot cat these two sounds!\n");
+  }
+    
+}
