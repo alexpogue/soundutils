@@ -18,6 +18,7 @@ sound_t* loadEmptySound() {
   if(!sp) {
     return NULL;
   }
+  sp->fileName = NULL;
   sp->error = NO_ERROR;
   sp->rawData = NULL;
   sp->dataSize = 0;
@@ -55,7 +56,7 @@ sound_t* loadSound(FILE* file, char* fileName) {
 }
 
 void unloadSound(sound_t* sound) {
-  if(sound->error != ERROR_MEMORY && sound->rawData != NULL && sound->dataSize == 0) {
+  if(sound->error != ERROR_MEMORY && sound->rawData != NULL && sound->dataSize != 0) {
     free(sound->rawData);
   }
   if(sound->fileName != NULL) {
@@ -271,25 +272,25 @@ void printData(sound_t* sound) {
   int i;
   if(sound->bitDepth == 8 && sound->fileType == CS229) {
     char* charData = (char*)sound->rawData;
-    for(i = 0; i < calculateNumSamples(sound) + sound->numChannels; i++) {
+    for(i = 0; i < calculateNumSamples(sound) * sound->numChannels; i++) {
       printf("%d:\t\t%d\n", i, charData[i]);
     }
   }
   else if(sound->bitDepth == 8 && sound->fileType == WAVE) {
     unsigned char* uCharData = (unsigned char*)sound->rawData;
-    for(i = 0; i < calculateNumSamples(sound) + sound->numChannels; i++) {
+    for(i = 0; i < calculateNumSamples(sound) * sound->numChannels; i++) {
       printf("%d:\t\t%d\n", i, uCharData[i]);
     }
   } 
   else if(sound->bitDepth == 16) {
     short* shortData = (short*)sound->rawData;
-    for(i = 0; i < calculateNumSamples(sound) + sound->numChannels; i++) {
+    for(i = 0; i < calculateNumSamples(sound) * sound->numChannels; i++) {
       printf("%d:\t\t%d\n", i, shortData[i]);
     }
   }
   else if(sound->bitDepth == 32) {
     long* longData = (long*)sound->rawData;
-    for(i = 0; i < calculateNumSamples(sound) + sound->numChannels; i++) {
+    for(i = 0; i < calculateNumSamples(sound) * sound->numChannels; i++) {
       printf("%d:\t\t%ld\n", i, longData[i]);
     }
   }
