@@ -61,10 +61,9 @@ int main(int argc, char* argv[]) {
       }
     }
     for(i = 1; i < argc; i++) {
+      sound_t* autoLoadedSound;
       char* fileName = argv[i];
       FILE* fp2 = fopen(fileName, "rb");
-      sound_t* autoLoadedSound;
-      printf("\n");
       if(!fp2) {
         printFileOpenError(fileName);
         exit(1);
@@ -78,6 +77,7 @@ int main(int argc, char* argv[]) {
         printErrorsInSound(autoLoadedSound);
       }
       else {
+        printf("\n");
         printSoundDetails(autoLoadedSound);
       }
 
