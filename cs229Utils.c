@@ -1,5 +1,7 @@
 #include "cs229Utils.h"
 #include "fileReader.h"
+#include "readError.h"
+#include "writeError.h"
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>

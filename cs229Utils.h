@@ -16,4 +16,10 @@ void cs229Read(FILE* fp, sound_t* sound);
 */
 void toLowerCase(char* str, size_t n);
 
+/**
+  Write sound to file.
+  Returns 0 on success.
+*/
+int writeCs229File(sound_t* sound, FILE* fp);
+
 #endif

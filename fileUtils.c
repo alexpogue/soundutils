@@ -4,6 +4,7 @@
 #include "waveUtils.h"
 #include "cs229Utils.h"
 #include "readError.h"
+#include "writeError.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -252,9 +253,12 @@ void addZeroedChannels(int howMany, sound_t* sound) {
   sound->numChannels = newNumChannels;
 } 
 
-int writeSoundToFile(sound_t* sound, char* fileName) {
+writeError_t writeSoundToFile(sound_t* sound, char* fileName) {
   FILE* fp;
   fp = fopen(fileName, "wb");
+  if(!fp) {
+    return WRITE_ERROR_OPENING;
+  }
   if(sound->fileType == CS229) {
     /*writeCs229File(sound, fp);*/
   }
