@@ -200,46 +200,55 @@ void addZeroedChannels(int howMany, sound_t* sound) {
   sound->rawData = newData;
 
   newLastIndex = calculateNumSamples(sound) * sound->numChannels + numAdditionalData - 1;
-  j = calculateNumSamples(sound);
+  j = calculateNumSamples(sound) * sound->numChannels;
   if(sound->bitDepth == 8 && sound->fileType == WAVE) {
     unsigned char* uCharData = (unsigned char*)sound->rawData;
-    for(i = newLastIndex - sound->numChannels; i >= 0; i-=(sound->numChannels+1) ) {
-      uCharData[i] = 128;
-      for(k = 1; k <= sound->numChannels; k++) {
-        uCharData[i+k] = uCharData[--j];
+    for(i = newLastIndex; i >= newNumChannels - 1; i-=(newNumChannels) ) {
+      for(k = 0; k < howMany; k++) {
+        uCharData[i-k] = 0;
+      }
+      for(k = i - howMany; k > i - newNumChannels; k--) {
+        uCharData[k] = uCharData[--j];
       }
     }
   }
   else if(sound->bitDepth == 8 && sound->fileType == CS229) {
     signed char* charData = (signed char*)sound->rawData;
-    for(i = newLastIndex - sound->numChannels; i >= 0; i-=(sound->numChannels+1) ) {
-      charData[i] = 0;
-      for(k = 1; k <= sound->numChannels; k++) {
-        charData[i+k] = charData[--j];
+    for(i = newLastIndex; i >= newNumChannels - 1; i-=(newNumChannels) ) {
+      for(k = 0; k < howMany; k++) {
+        charData[i-k] = 0;
+      }
+      for(k = i - howMany; k > i - newNumChannels; k--) {
+        charData[k] = charData[--j];
       }
     }
   }
   else if(sound->bitDepth == 16) {
     short* shortData = (short*)sound->rawData;
-    for(i = newLastIndex - sound->numChannels; i >= 0; i-=(sound->numChannels+1) ) {
-      shortData[i] = 0;
-      for(k = 1; k <= sound->numChannels; k++) {
-        shortData[i+k] = shortData[--j];
+     for(i = newLastIndex; i >= newNumChannels - 1; i-=(newNumChannels) ) {
+      for(k = 0; k < howMany; k++) {
+        shortData[i-k] = 0;
+      }
+      for(k = i - howMany; k > i - newNumChannels; k--) {
+        shortData[k] = shortData[--j];
       }
     }
   }
   else if(sound->bitDepth == 32) {
     long* longData = (long*)sound->rawData;
-    for(i = newLastIndex - sound->numChannels; i >= 0; i-=(sound->numChannels+1) ) {
-      longData[i] = 0;
-      for(k = 1; k <= sound->numChannels; k++) {
-        longData[i+k] = longData[--j];
+    for(i = newLastIndex; i >= newNumChannels - 1; i-=(newNumChannels) ) {
+      for(k = 0; k < howMany; k++) {
+        longData[i-k] = 0;
+      }
+      for(k = i - howMany; k > i - newNumChannels; k--) {
+        longData[k] = longData[--j];
       }
     }
   }
   else {
     sound->error = ERROR_BIT_DEPTH;
   }
+  sound->dataSize = newSize;
   sound->numChannels = newNumChannels;
 }    
 
