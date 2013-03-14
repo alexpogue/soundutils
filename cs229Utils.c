@@ -289,9 +289,18 @@ readError_t getKeywordValue(char* keyword, size_t keywordLen, char* value, size_
     keyword[0] = 0;
     return NO_ERROR;
   }
+  /* get rid of whitespace on the end of keyword */
   keyword[length-1] = 0;
-  if(finalChar == '\n') {
+  if(length > 2 && keyword[length-2] == '\r') {
+    keyword[length-2] = 0;
+  }
+  if(finalChar == '\n' && keyword[0] != '\r' && length > 1) {
     value[0] = 0; /* null first value char to show value was not found */
+    return NO_ERROR;
+  }
+  else if(finalChar == '\n' && (length == 1 || keyword[0] == '\r')) {
+    /* blank line, regard as comment */
+    keyword[0] = '#';
     return NO_ERROR;
   }
 
@@ -324,6 +333,9 @@ readError_t getKeywordValue(char* keyword, size_t keywordLen, char* value, size_
     }
   }
   value[length-1] = 0;
+  if(length > 2 && value[length-2] == '\r') {
+    value[length-2] = 0;
+  }
   return NO_ERROR;
 }
 
@@ -372,7 +384,9 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
   long* dataLongs;
 
   for(i = 0; i < (cd->numChannels); i++) {
-    error = readUntilWhitespace(dataStr, 13, fp);
+    /* to reach the next sample data */
+    error = readUntilNonWhitespace(&dataStr[0], fp);
+    error = readUntilWhitespace(&dataStr[1], 12, fp);
     /* it might be okay to reach eof after the final channel is read */
     if(error == ERROR_EOF) {
       return CS229_DONE_READING;
@@ -386,6 +400,10 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
       return CS229_ERROR_INVALID_VALUE;
     }
     dataStr[length-1] = 0;
+
+    if(length > 2 && dataStr[length-2] == '\r') { 
+      dataStr[length-2] = 0;
+    }
 
     valLong = strtol(dataStr, &afterNumber, 10);
     if(dataStr[0] == '\0' || afterNumber[0] != '\0') {

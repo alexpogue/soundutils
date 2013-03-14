@@ -250,7 +250,19 @@ void addZeroedChannels(int howMany, sound_t* sound) {
   }
   sound->dataSize = newSize;
   sound->numChannels = newNumChannels;
-}    
+} 
+
+int writeSoundToFile(sound_t* sound, char* fileName) {
+  FILE* fp;
+  fp = fopen(fileName, "wb");
+  if(sound->fileType == CS229) {
+    /*writeCs229File(sound, fp);*/
+  }
+  else if(sound->fileType == WAVE) {
+    /*writeWaveFile(sound, fp);*/
+  }
+  return 0;
+}
 
 unsigned int calculateNumSamples(sound_t* sound) {
   if(sound->error != NO_ERROR 
