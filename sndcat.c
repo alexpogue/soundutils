@@ -13,6 +13,7 @@ int main(int argc, char** argv) {
     int i;
     char** fileNames = NULL;
     int numFiles = 0;
+    sound_t* dest;
     sound_t** sounds = NULL;
     for(i = 1; i < argc; i++) {
       if(argv[i][0] == '-') {
@@ -36,9 +37,9 @@ int main(int argc, char** argv) {
         int newNumFiles = numFiles;
         /* add filename to files to be concatenated */
         ++newNumFiles;
-        newFileNames = realloc(fileNames, newNumFiles);
+        newFileNames = (char**)realloc(fileNames, newNumFiles*sizeof(char*));
         if(!newFileNames) {
-          /* malloc fail */
+          printf("Malloc failed!\n");
           exit(1);
         }
         fileNames = newFileNames;
@@ -51,7 +52,7 @@ int main(int argc, char** argv) {
       FILE* fp;
       fp = fopen(fileNames[i], "rb");
       if(!fp) {
-        /* file open error */
+        fprintf(stderr, "File %s could not be opened\n", fileNames[i]);
         exit(1);
       }
       sounds[i] = loadSound(fp, fileNames[i]);
@@ -60,21 +61,17 @@ int main(int argc, char** argv) {
         /*concatenateSounds(sounds[i-1], sounds[i], dest, CS229);*/
       }
     }
-    sound_t* dest = loadEmptySound();
+    free(fileNames);
+    printData(sounds[0]);
+    dest = loadEmptySound();
     concatenateSounds(sounds[0], sounds[1], dest, CS229);
-    char* data = (char*)dest->rawData;
-    printf("s1 dataSize = %d\n", sounds[0]->dataSize);
-    printf("s2 dataSize = %d\n", sounds[1]->dataSize);
-    printf("dest dataSize = %d\n", dest->dataSize);
-    /*
-    for(i = 0; i < calculateNumSamples(dest); i++) {
-      printf("%d\n", data[i]);
-    }
-    */
-
+    printData(dest);
+    
+    unloadSound(dest);
     for(i = 0; i < numFiles; i++) {
       unloadSound(sounds[i]);
     }
+    free(sounds);
   }
   return 0;
 }
@@ -99,23 +96,21 @@ void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resul
     scaleBitDepth(s1->bitDepth, s2);
   }
   else if(s1->bitDepth < s2->bitDepth) {
-     printf("s1 bitdepth = %d\n", s1->bitDepth);
-    printf("s2 bitdepth = %d\n", s2->bitDepth);
-   dest->bitDepth = s2->bitDepth;
+    dest->bitDepth = s2->bitDepth;
     scaleBitDepth(s2->bitDepth, s1);
-    printf("s1 bitdepth = %d\n", s1->bitDepth);
   }
   else {
     dest->bitDepth = s1->bitDepth;
   }
   if(s1->numChannels > s2->numChannels) {
+    int numChannelsToAdd = s1->numChannels - s2->numChannels;
     dest->numChannels = s1->numChannels;
-    addZeroedChannels(s1->numChannels - s2->numChannels, s2);
-    printf("numChannels = %d\n", s2->numChannels);
+    addZeroedChannels(numChannelsToAdd, s2);
   }
   else if(s1->numChannels < s2->numChannels) {
+    int numChannelsToAdd = s2->numChannels - s1->numChannels;
     dest->numChannels = s2->numChannels;
-    addZeroedChannels(s2->numChannels - s1->numChannels, s1);
+    addZeroedChannels(numChannelsToAdd, s1);
   }
   else {
     dest->numChannels = s1->numChannels;
