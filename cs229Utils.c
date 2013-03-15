@@ -2,6 +2,8 @@
 #include "fileReader.h"
 #include "readError.h"
 #include "writeError.h"
+#include "fileUtils.h"
+#include "writeError.h"
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -126,7 +128,15 @@ void cs229Read(FILE* fp, sound_t* sound) {
     sound->error = ERROR_BIT_DEPTH;
     return;
   }
-  cData->data = malloc(calculateDataSize(cData));
+
+  /* TODO: HERE IS THE PROBLEM! We need to know how many samples there are but
+  we don't know until we have read through the samples in readSamples(). Should
+  we count them while we read through, and only assign at the end? */
+  cData->data = malloc(0);
+  if(!cData->data) {
+    sound->error = ERROR_EOF;
+  }
+
   sampleReadStatus = readSamples(cData, fp);
   if(sampleReadStatus != CS229_DONE_READING && sampleReadStatus != CS229_NO_ERROR) {
     sound->error = ERROR_SAMPLE_DATA;
@@ -455,4 +465,90 @@ cs229ReadStatus_t readSamples(cs229Data_t* cd, FILE* fp) {
   }
   cd->numSamples = i-1;
   return status;
+}
+
+int getMaxCharsIn8Bit() {
+  /* maxChars is "-127" */
+  return 4;
+}
+int getMaxCharsIn16Bit() {
+  /* maxChars is "-32768" */
+  return 6;
+}
+int getMaxCharsIn32Bit() {
+  /* maxChars is "-2147483647" */
+  return 11;
+}
+
+int getMaxCharsPerSample(sound_t* sound) {
+  int maxCharsInEachNum, charsForAllNums, charsForSpaces, charsForNewline;
+  if(sound->bitDepth == 8) {
+    maxCharsInEachNum = getMaxCharsIn8Bit();
+  }
+  else if(sound->bitDepth == 16) {
+    maxCharsInEachNum = getMaxCharsIn16Bit();
+  }
+  else if(sound->bitDepth == 32) {
+    maxCharsInEachNum = getMaxCharsIn32Bit();
+  }
+  charsForAllNums = maxCharsInEachNum * sound->numChannels;
+  charsForSpaces = sound->numChannels;
+  charsForNewline = 1;
+  return charsForAllNums + charsForSpaces + charsForNewline;
+}
+
+int getSamplesInCs229Format(sound_t* sound, char* str, int size) {
+  int maxCharsPerSample = getMaxCharsPerSample(sound);
+  int maxCharsAllSamples = maxCharsPerSample * calculateNumSamples(sound);
+  int maxCharsPerData;
+  int i, j;
+  int charCount = 0;
+  if(maxCharsAllSamples < size) {
+    printf("May overflow, not enough room for max num chars\n");
+  }
+  if(sound->bitDepth == 8) {
+    char* charData = (char*)sound->rawData;
+    /* to fit "-127 \0" [space] included */
+    char singleData[6];
+    maxCharsPerData = 6;
+    for(i = 0; i < calculateNumSamples(sound); i++) {
+      int currDataIndex = i * sound->numChannels;
+      for(j = 0; j < sound->numChannels; j++) {
+        charCount += snprintf(singleData, maxCharsPerData, "%d ", charData[currDataIndex + j]);
+        if(charCount >= size) {
+          printf("Overflow while writing samples, code red.\n");
+          printf("tried to read %d chars\n", charCount);
+          return charCount;
+        }
+        strncat(str, singleData, maxCharsPerData);
+      }
+      /* replace final space with newline */
+      str[strlen(str)-1] = '\n';
+    }
+    /* get rid of trailing newline */
+    str[charCount-1] = 0;
+    --charCount;
+  }
+  return charCount;
+}
+      
+writeError_t writeCs229File(sound_t* sound, FILE* fp) {
+  int maxSizeSamples = getMaxCharsPerSample(sound) * calculateNumSamples(sound);
+  char* sampleData = NULL;
+  sampleData = malloc(maxSizeSamples);
+  sampleData[0] = 0;
+  /*printf("max size samples = %d\n", maxSizeSamples);*/
+  if(!sampleData) {
+    return WRITE_ERROR_MEMORY;
+  }
+  getSamplesInCs229Format(sound, sampleData, maxSizeSamples);
+  fprintf(fp, "CS229\n");
+  fprintf(fp, "Samples %d\n", calculateNumSamples(sound));
+  fprintf(fp, "Channels %d\n", sound->numChannels);
+  fprintf(fp, "BitRes %d\n", sound->bitDepth);
+  fprintf(fp, "SampleRate %ld\n", sound->sampleRate);
+  fprintf(fp, "StartData\n");
+  fprintf(fp, "%s", sampleData);
+  free(sampleData);
+  return WRITE_SUCCESS;
 }

@@ -2,6 +2,7 @@
 #define FILE_TYPES_GUARD
 
 #include "readError.h"
+#include "writeError.h"
 /* TODO: CONSIDER MOVING TO fileUtils.h */
 typedef enum {
   CS229,

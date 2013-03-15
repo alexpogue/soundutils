@@ -15,7 +15,7 @@ void scaleBitDepth(int target, sound_t* sound);
 void addZeroedChannels(int howMany, sound_t* sound);
 unsigned int calculateNumSamples(sound_t* sound);
 float calculateSoundLength(sound_t* sound);
-writeError_t writeSoundToFile(sound_t* sound, char* fileName);
+writeError_t writeSoundToFile(sound_t* sound, FILE* fp);
 
 /* TODO: TEST */
 void printData(sound_t* sound);

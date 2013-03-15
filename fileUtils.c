@@ -141,6 +141,7 @@ void waveToCs229(sound_t* sound) {
     if( (sound->bitDepth == 8 && charData[i] == -128)
       || (sound->bitDepth == 16 && charData[i] == -32768)
       || (sound->bitDepth == 32 && charData[i] < -2147483647) ) {
+      /* we used < -2147483647 because we need to use LL suffix for one less */
       charData[i] += 1;
     }
   }
@@ -253,14 +254,9 @@ void addZeroedChannels(int howMany, sound_t* sound) {
   sound->numChannels = newNumChannels;
 } 
 
-writeError_t writeSoundToFile(sound_t* sound, char* fileName) {
-  FILE* fp;
-  fp = fopen(fileName, "wb");
-  if(!fp) {
-    return WRITE_ERROR_OPENING;
-  }
+writeError_t writeSoundToFile(sound_t* sound, FILE* fp) { 
   if(sound->fileType == CS229) {
-    /*writeCs229File(sound, fp);*/
+    writeCs229File(sound, fp);
   }
   else if(sound->fileType == WAVE) {
     /*writeWaveFile(sound, fp);*/

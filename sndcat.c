@@ -12,6 +12,7 @@ int main(int argc, char** argv) {
   else {
     int i;
     char** fileNames = NULL;
+    char* outputFileName = NULL;
     int numFiles = 0;
     sound_t* dest;
     sound_t** sounds = NULL;
@@ -21,7 +22,7 @@ int main(int argc, char** argv) {
           /* print help and exit(1)*/
         }
         else if(argv[i][1] == 'o') {
-          /* set output filename string to argv[i+1] */
+          outputFileName = argv[i+1];
           /* don't reread the file name as an input file */
           ++i;
         }
@@ -62,10 +63,20 @@ int main(int argc, char** argv) {
       }
     }
     free(fileNames);
-    printData(sounds[0]);
     dest = loadEmptySound();
     concatenateSounds(sounds[0], sounds[1], dest, CS229);
-    printData(dest);
+
+    if(outputFileName == NULL) {
+      writeSoundToFile(dest, stdout);
+    }
+    else {
+      FILE* fp;
+      fp = fopen(outputFileName, "wb");
+      if(!fp) {
+        fprintf(stderr, "Could not open %s for writing\n", outputFileName);
+      }
+      writeSoundToFile(dest, fp);
+    }
     
     unloadSound(dest);
     for(i = 0; i < numFiles; i++) {
