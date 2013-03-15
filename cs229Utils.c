@@ -37,12 +37,13 @@ typedef struct {
    
 
 /**
-  Reads the samples from the startdata section into the given cs229Data_t. 
-  Appropriate cs229ReadStatus_t is returned.
+  Reads the samples from the startdata up to sampleLimit samples. Reads samples
+  into the given cs229Data_t. Appropriate cs229ReadStatus_t is returned and 
+  samplesFilled is modified to tell how many samples we read.
   Precondition: file pointer directly before a sample
   Postcondition: file pointer directly after a sample
 */
-cs229ReadStatus_t readSamples(cs229Data_t* cd, FILE* fp); 
+cs229ReadStatus_t readSamples(cs229Data_t* cd, int sampleLimit, int* samplesFilled, FILE* fp); 
 
 /**
   Reads "keyword[whitespace]value" and places null-terminated keyword and value 
@@ -107,6 +108,9 @@ void cs229Read(FILE* fp, sound_t* sound) {
   cs229Data_t* cData = (cs229Data_t*)malloc(sizeof(cs229Data_t));
   keyword_t keyword;
   cs229ReadStatus_t sampleReadStatus;
+  long bytesAvailable = 16;
+  int samplesRead = 0;
+  void* newData = NULL;
 
   /*ignore newline after "CS229" header */
   sound->error = ignoreLine(fp);
@@ -129,20 +133,30 @@ void cs229Read(FILE* fp, sound_t* sound) {
     return;
   }
 
-  /* TODO: HERE IS THE PROBLEM! We need to know how many samples there are but
-  we don't know until we have read through the samples in readSamples(). Should
-  we count them while we read through, and only assign at the end? */
-  cData->data = malloc(0);
-  if(!cData->data) {
-    sound->error = ERROR_EOF;
-  }
-
-  sampleReadStatus = readSamples(cData, fp);
-  if(sampleReadStatus != CS229_DONE_READING && sampleReadStatus != CS229_NO_ERROR) {
-    sound->error = ERROR_SAMPLE_DATA;
+  cData->data = NULL;
+  do {
+    int bytesPerSample = cData->numChannels * cData->bitres / 8;
+    int sampleLimit = bytesAvailable / bytesPerSample;
+    bytesAvailable *= 2;
+    newData = realloc(cData->data, bytesAvailable);
+    if(!newData) {
+      sound->error = ERROR_MEMORY;
+      free(cData);
+      return;
+    }
+    cData->data = newData;
+    sampleReadStatus = readSamples(cData, sampleLimit, &samplesRead, fp);
+  } while(sampleReadStatus != CS229_DONE_READING && sound->error == NO_ERROR);
+  cData->numSamples = samplesRead;
+  bytesAvailable = samplesRead * cData->numChannels * cData->bitres / 8;
+  /* fix overestimation of data size from do/while loop */
+  newData = realloc(cData->data, bytesAvailable);
+  if(!newData) {
+    sound->error = ERROR_MEMORY;
+    free(cData);
     return;
   }
-  
+      
   cs229ToSound(cData, sound);
   free(cData);
 }
@@ -457,13 +471,18 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
   return CS229_NO_ERROR;
 }
 
-cs229ReadStatus_t readSamples(cs229Data_t* cd, FILE* fp) {
+/* TODO: give cs229Data a status member and modify it's status instead of returning */
+cs229ReadStatus_t readSamples(cs229Data_t* cd, int sampleLimit, int* samplesFilled, FILE* fp) {
   int i;
   cs229ReadStatus_t status = CS229_NO_ERROR;
-  for(i = 0; status == CS229_NO_ERROR; i++) {
+  for(i = 0; status == CS229_NO_ERROR && i < sampleLimit; i++) {
     status = readSample(cd, i * cd->numChannels, fp);
   }
-  cd->numSamples = i-1;
+  *samplesFilled = i;
+  if(status != CS229_NO_ERROR) {
+    /* we did not fill the last sample if we had an error */
+    *samplesFilled -= 1;
+  }
   return status;
 }
 
@@ -497,6 +516,8 @@ int getMaxCharsPerSample(sound_t* sound) {
   return charsForAllNums + charsForSpaces + charsForNewline;
 }
 
+/* TODO: CONTINUE THIS, MAKE IT WORK FOR OTHER BIT DEPTHS! */
+/* TODO: improve bounds checking */
 int getSamplesInCs229Format(sound_t* sound, char* str, int size) {
   int maxCharsPerSample = getMaxCharsPerSample(sound);
   int maxCharsAllSamples = maxCharsPerSample * calculateNumSamples(sound);
@@ -525,6 +546,8 @@ int getSamplesInCs229Format(sound_t* sound, char* str, int size) {
       /* replace final space with newline */
       str[strlen(str)-1] = '\n';
     }
+    /* TODO: move this outside IF, simplify and modify to support more 
+    bitdepth values */
     /* get rid of trailing newline */
     str[charCount-1] = 0;
     --charCount;
