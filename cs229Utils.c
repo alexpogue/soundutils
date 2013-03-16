@@ -149,13 +149,14 @@ void cs229Read(FILE* fp, sound_t* sound) {
   } while(sampleReadStatus != CS229_DONE_READING && sound->error == NO_ERROR);
   cData->numSamples = samplesRead;
   bytesAvailable = samplesRead * cData->numChannels * cData->bitres / 8;
-  /* fix overestimation of data size from do/while loop */
+  /* reallocate to fix overestimation of data size from do/while loop */
   newData = realloc(cData->data, bytesAvailable);
   if(!newData) {
     sound->error = ERROR_MEMORY;
     free(cData);
     return;
   }
+  cData->data = newData;
       
   cs229ToSound(cData, sound);
   free(cData);
@@ -210,11 +211,13 @@ unsigned char longToUChar(unsigned long makeMeAUChar) {
 
 
 keyword_t storeKeywordValue(char* keywordStr, char* valueStr, cs229Data_t* cd) {
-  keyword_t kw = strToKeyword(keywordStr);
+  keyword_t kw;
   char* afterNumber;
   unsigned long val;
   unsigned int samples, sampleRate;
   unsigned char channels, bitres;
+
+  kw = strToKeyword(keywordStr);
   if(kw == KEYWORD_STARTDATA || kw == KEYWORD_COMMENT) {
     /* don't try to read value for startdata or comment, there isn't one! */
     return kw;
@@ -516,42 +519,63 @@ int getMaxCharsPerSample(sound_t* sound) {
   return charsForAllNums + charsForSpaces + charsForNewline;
 }
 
-/* TODO: CONTINUE THIS, MAKE IT WORK FOR OTHER BIT DEPTHS! */
 /* TODO: improve bounds checking */
 int getSamplesInCs229Format(sound_t* sound, char* str, int size) {
   int maxCharsPerSample = getMaxCharsPerSample(sound);
   int maxCharsAllSamples = maxCharsPerSample * calculateNumSamples(sound);
-  int maxCharsPerData;
   int i, j;
   int charCount = 0;
   if(maxCharsAllSamples < size) {
     printf("May overflow, not enough room for max num chars\n");
   }
-  if(sound->bitDepth == 8) {
-    char* charData = (char*)sound->rawData;
-    /* to fit "-127 \0" [space] included */
-    char singleData[6];
-    maxCharsPerData = 6;
-    for(i = 0; i < calculateNumSamples(sound); i++) {
-      int currDataIndex = i * sound->numChannels;
-      for(j = 0; j < sound->numChannels; j++) {
-        charCount += snprintf(singleData, maxCharsPerData, "%d ", charData[currDataIndex + j]);
-        if(charCount >= size) {
-          printf("Overflow while writing samples, code red.\n");
-          printf("tried to read %d chars\n", charCount);
-          return charCount;
-        }
-        strncat(str, singleData, maxCharsPerData);
+  for(i = 0; i < calculateNumSamples(sound); i++) {
+    int currDataIndex = i * sound->numChannels;
+    int maxCharsPerData;
+    for(j = 0; j < sound->numChannels; j++) {
+      int numCharsIntended;
+      char *singleData = NULL;
+      if(sound->bitDepth == 8) {
+        char* charData = (char*)sound->rawData;
+        /* 6 chars to fit "-127 \0" */
+        singleData = malloc(6);
+        maxCharsPerData = 6;
+        numCharsIntended = snprintf(singleData, maxCharsPerData, "%d ", charData[currDataIndex + j]);
       }
-      /* replace final space with newline */
-      str[strlen(str)-1] = '\n';
+      else if(sound->bitDepth == 16) {
+        short* shortData = (short*)sound->rawData;
+        /* 8 chars to fit "-32767 \0" */
+        singleData = malloc(8);
+        maxCharsPerData = 8;
+        numCharsIntended = snprintf(singleData, maxCharsPerData, "%hd ", shortData[currDataIndex + j]);
+      }
+      else if(sound->bitDepth == 32) {
+        long* longData = (long*)sound->rawData;
+        /* 13 chars to fit "-2147483648 \0" */
+        singleData = malloc(13);
+        maxCharsPerData = 13;
+        numCharsIntended = snprintf(singleData, maxCharsPerData, "%ld ", longData[currDataIndex + j]);
+      }
+      else {
+        printf("Should never happen, improper bit depth\n");
+      }
+      if(numCharsIntended >= maxCharsPerData) {
+        printf("Should never happen, tried to write past more chars than maxCharsPerData\n");
+      }
+      charCount += numCharsIntended;
+      if(charCount >= size) {
+        printf("Overflow while writing samples, code red.\n");
+        printf("tried to read %d chars\n", charCount);
+        return charCount;
+      }
+      strncat(str, singleData, maxCharsPerData);
+      free(singleData);
     }
-    /* TODO: move this outside IF, simplify and modify to support more 
-    bitdepth values */
-    /* get rid of trailing newline */
-    str[charCount-1] = 0;
-    --charCount;
+    /* replace final space with newline */
+    str[strlen(str)-1] = '\n';
   }
+ /* get rid of trailing newline */
+  str[charCount-1] = 0;
+  --charCount;
   return charCount;
 }
       
