@@ -434,8 +434,6 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
       dataStr[length-2] = 0;
     }
 
-    printf("read data %s\n", dataStr);
-
     valLong = strtol(dataStr, &afterNumber, 10);
     if(dataStr[0] == '\0' || afterNumber[0] != '\0') {
       /* not a valid number */
@@ -488,7 +486,6 @@ cs229ReadStatus_t readSamples(cs229Data_t* cd, int sampleLimit, int* samplesFill
     /* we did not fill the last sample if we had an error */
     *samplesFilled -= 1;
   }
-  printf("samples filled = %d\n", *samplesFilled);
   return status;
 }
 
