@@ -2,6 +2,11 @@
 #define ERROR_PRINTER_H
 
 /**
+  Prints error message for sound->error, and nothing if sound->error = NO_ERROR
+*/
+void printErrorsInSound(sound_t* sound);
+
+/**
   Prints memory allocation error.
 */
 void printMemoryError();
