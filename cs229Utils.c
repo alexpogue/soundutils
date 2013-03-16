@@ -434,6 +434,8 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
       dataStr[length-2] = 0;
     }
 
+    printf("read data %s\n", dataStr);
+
     valLong = strtol(dataStr, &afterNumber, 10);
     if(dataStr[0] == '\0' || afterNumber[0] != '\0') {
       /* not a valid number */
@@ -481,11 +483,12 @@ cs229ReadStatus_t readSamples(cs229Data_t* cd, int sampleLimit, int* samplesFill
   for(i = 0; status == CS229_NO_ERROR && i < sampleLimit; i++) {
     status = readSample(cd, i * cd->numChannels, fp);
   }
-  *samplesFilled = i;
+  *samplesFilled += i;
   if(status != CS229_NO_ERROR) {
     /* we did not fill the last sample if we had an error */
     *samplesFilled -= 1;
   }
+  printf("samples filled = %d\n", *samplesFilled);
   return status;
 }
 
@@ -554,12 +557,6 @@ int getSamplesInCs229Format(sound_t* sound, char* str, int size) {
         singleData = malloc(13);
         maxCharsPerData = 13;
         numCharsIntended = snprintf(singleData, maxCharsPerData, "%ld ", longData[currDataIndex + j]);
-      }
-      else {
-        printf("Should never happen, improper bit depth\n");
-      }
-      if(numCharsIntended >= maxCharsPerData) {
-        printf("Should never happen, tried to write past more chars than maxCharsPerData\n");
       }
       charCount += numCharsIntended;
       if(charCount >= size) {
