@@ -2,7 +2,10 @@
 #include <stdio.h>
 
 void printErrorsInSound(sound_t* sound) {
-  if(sound->error == ERROR_EOF) {
+  if(sound->error == NO_ERROR) {
+    break;
+  }
+  else if(sound->error == ERROR_EOF) {
     printEofError();
   }
   else if(sound->error == ERROR_READING) {
