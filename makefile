@@ -1,7 +1,7 @@
 all: sndcat sndinfo
 
 sndcat: sndcat.o fileUtils.o cs229Utils.o fileReader.o waveUtils.o
-	gcc sndcat.o fileUtils.o cs229Utils.o fileReader.o waveUtils.o -o sndcat
+	gcc sndcat.o fileUtils.o cs229Utils.o fileReader.o waveUtils.o errorPrinter.o -o sndcat
 
 sndinfo: sndinfo.o fileUtils.o fileReader.o errorPrinter.o waveUtils.o cs229Utils.o
 	gcc sndinfo.o fileUtils.o fileReader.o errorPrinter.o waveUtils.o cs229Utils.o -o sndinfo
