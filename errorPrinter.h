@@ -1,5 +1,6 @@
 #ifndef ERROR_PRINTER_H
 #define ERROR_PRINTER_H
+#include "fileTypes.h"
 
 /**
   Prints error message for sound->error, and nothing if sound->error = NO_ERROR

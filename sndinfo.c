@@ -89,36 +89,6 @@ int main(int argc, char* argv[]) {
   exit(0);
 }
 
-void printErrorsInSound(sound_t* sound) {
-  if(sound->error == ERROR_EOF) {
-    printEofError();
-  }
-  else if(sound->error == ERROR_READING) {
-    printFileReadError();
-  }
-  else if(sound->error == ERROR_MEMORY) {
-    printMemoryError();
-  }
-  else if(sound->error == ERROR_FILETYPE) {
-    printFileTypeError();
-  }
-  else if(sound->error == ERROR_BIT_DEPTH) {
-    printBitDepthError();
-  }
-  else if(sound->error == ERROR_INVALID_KEYWORD) {
-    printInvalidKeywordError();
-  }
-  else if(sound->error == ERROR_NO_VALUE) {
-    printNoValueError();
-  }
-  else if(sound->error == ERROR_SAMPLE_DATA) {
-    printSampleDataError();
-  }
-  else {
-    printf("Unforeseen error occurred!\n");
-  }
-}
-
 void printSoundDetails(sound_t* sound) {
   char typeStr[6];
   fileTypeToString(typeStr, sound->fileType);
