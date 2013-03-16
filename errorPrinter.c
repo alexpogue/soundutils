@@ -3,7 +3,7 @@
 
 void printErrorsInSound(sound_t* sound) {
   if(sound->error == NO_ERROR) {
-    break;
+    return;
   }
   else if(sound->error == ERROR_EOF) {
     printEofError();
