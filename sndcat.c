@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "fileUtils.h"
+#include "errorPrinter.h"
 
 void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType);
 void concatenateData(sound_t* s1, sound_t* s2, sound_t* dest);
@@ -13,9 +14,15 @@ int main(int argc, char** argv) {
     int i;
     char** fileNames = NULL;
     char* outputFileName = NULL;
+    int fileLimit = 2;
     int numFiles = 0;
     sound_t* dest;
     sound_t** sounds = NULL;
+    fileNames = (char**)malloc(fileLimit * sizeof(char*));
+    if(!fileNames) {
+      printf("Malloc failed!\n");
+      exit(1);
+    }
     for(i = 1; i < argc; i++) {
       if(argv[i][0] == '-') {
         if(argv[i][1] == 'h') {
@@ -34,26 +41,35 @@ int main(int argc, char** argv) {
         }
       }
       else {
-        char** newFileNames = NULL;
-        int newNumFiles = numFiles;
-        /* add filename to files to be concatenated */
-        ++newNumFiles;
-        newFileNames = (char**)realloc(fileNames, newNumFiles*sizeof(char*));
-        if(!newFileNames) {
-          printf("Malloc failed!\n");
-          exit(1);
+        int newNumFiles = numFiles + 1;
+        if(newNumFiles > fileLimit) {
+          fileLimit *= 2;
+          char** newFileNames = NULL;
+          newFileNames = (char**)realloc(fileNames, fileLimit * sizeof(char*));
+          if(!newFileNames) {
+            printf("Malloc failed!\n");
+            free(fileNames);
+            exit(1);
+          }
+          fileNames = newFileNames;
         }
-        fileNames = newFileNames;
         numFiles = newNumFiles;
         fileNames[numFiles-1] = argv[i];
       }
     }
     sounds = malloc(sizeof(sound_t*) * numFiles);
+    if(!sounds) {
+      printf("Malloc failed!\n");
+      free(fileNames);
+      exit(1);
+    }
     for(i = 0; i < numFiles; i++) {
       FILE* fp;
       fp = fopen(fileNames[i], "rb");
       if(!fp) {
         fprintf(stderr, "File %s could not be opened\n", fileNames[i]);
+        free(fileNames);
+        free(sounds);
         exit(1);
       }
       sounds[i] = loadSound(fp, fileNames[i]);
@@ -63,22 +79,28 @@ int main(int argc, char** argv) {
       }
     }
     free(fileNames);
-    dest = loadEmptySound();
-    concatenateSounds(sounds[0], sounds[1], dest, CS229);
+    if(sounds[0]->error == NO_ERROR && sounds[1]->error == NO_ERROR) {
+      dest = loadEmptySound();
+      concatenateSounds(sounds[0], sounds[1], dest, CS229);
 
-    if(outputFileName == NULL) {
-      writeSoundToFile(dest, stdout);
+      if(outputFileName == NULL) {
+        writeSoundToFile(dest, stdout);
+      }
+      else {
+        FILE* fp;
+        fp = fopen(outputFileName, "wb");
+        if(!fp) {
+          fprintf(stderr, "Could not open %s for writing\n", outputFileName);
+        }
+        writeSoundToFile(dest, fp);
+      }
+    
+      unloadSound(dest);
     }
     else {
-      FILE* fp;
-      fp = fopen(outputFileName, "wb");
-      if(!fp) {
-        fprintf(stderr, "Could not open %s for writing\n", outputFileName);
-      }
-      writeSoundToFile(dest, fp);
+      printErrorsInSound(sounds[0]);
+      printErrorsInSound(sounds[1]);
     }
-    
-    unloadSound(dest);
     for(i = 0; i < numFiles; i++) {
       unloadSound(sounds[i]);
     }

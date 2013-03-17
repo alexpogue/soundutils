@@ -136,8 +136,9 @@ void cs229Read(FILE* fp, sound_t* sound) {
   cData->data = NULL;
   do {
     int bytesPerSample = cData->numChannels * cData->bitres / 8;
-    int sampleLimit = bytesAvailable / bytesPerSample;
+    int sampleLimit;
     bytesAvailable *= 2;
+    sampleLimit = bytesAvailable / bytesPerSample;
     newData = realloc(cData->data, bytesAvailable);
     if(!newData) {
       sound->error = ERROR_MEMORY;
@@ -429,7 +430,6 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
       return CS229_ERROR_INVALID_VALUE;
     }
     dataStr[length-1] = 0;
-
     if(length > 2 && dataStr[length-2] == '\r') { 
       dataStr[length-2] = 0;
     }
@@ -477,15 +477,19 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
 /* TODO: give cs229Data a status member and modify it's status instead of returning */
 cs229ReadStatus_t readSamples(cs229Data_t* cd, int sampleLimit, int* samplesFilled, FILE* fp) {
   int i;
+  int samplesFilledThisTime = 0;
   cs229ReadStatus_t status = CS229_NO_ERROR;
-  for(i = 0; status == CS229_NO_ERROR && i < sampleLimit; i++) {
+  /*DEBUG TEST */
+  char* charData= (char*)cd->data;
+  for(i = *samplesFilled; status == CS229_NO_ERROR && i < sampleLimit; i++) {
     status = readSample(cd, i * cd->numChannels, fp);
+    ++samplesFilledThisTime;
   }
-  *samplesFilled += i;
   if(status != CS229_NO_ERROR) {
     /* we did not fill the last sample if we had an error */
-    *samplesFilled -= 1;
+    samplesFilledThisTime -= 1;
   }
+  *samplesFilled += (samplesFilledThisTime);
   return status;
 }
 
@@ -567,7 +571,7 @@ int getSamplesInCs229Format(sound_t* sound, char* str, int size) {
     /* replace final space with newline */
     str[strlen(str)-1] = '\n';
   }
- /* get rid of trailing newline */
+  /* get rid of trailing newline */
   str[charCount-1] = 0;
   --charCount;
   return charCount;
@@ -578,10 +582,9 @@ writeError_t writeCs229File(sound_t* sound, FILE* fp) {
   char* sampleData = NULL;
   sampleData = malloc(maxSizeSamples);
   sampleData[0] = 0;
-  /*printf("max size samples = %d\n", maxSizeSamples);*/
   if(!sampleData) {
     return WRITE_ERROR_MEMORY;
-  }
+ }
   getSamplesInCs229Format(sound, sampleData, maxSizeSamples);
   fprintf(fp, "CS229\n");
   fprintf(fp, "Samples %d\n", calculateNumSamples(sound));
