@@ -381,8 +381,8 @@ readError_t readUntilNonWhitespace(char* nonWhite, FILE* fp) {
 
 /**
   Reads n-1 characters or until and including space, tab, or newline, then pad 
-  with a null terminator. When a read error occurs, returns readError_t early 
-  and does not null terminate the string.
+  with a null terminator. When a read error occurs, adds null terminator and 
+  returns readError_t early.
 */
 readError_t readUntilWhitespace(char* str, size_t n, FILE* file) {
   char byte;
@@ -391,6 +391,7 @@ readError_t readUntilWhitespace(char* str, size_t n, FILE* file) {
   do {
     readError = readBytes(&byte, 1, file);
     if(readError != NO_ERROR) {
+      str[i] = 0;
       return readError;
     }
     str[i++] = byte;
@@ -417,7 +418,7 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
     /* to reach the next sample data */
     error = readUntilNonWhitespace(&dataStr[0], fp);
     error = readUntilWhitespace(&dataStr[1], 12, fp);
-    /* it might be okay to reach eof after the final channel is read */
+    /* TODO: CORRECT THIS BY WRITING FILE WITH AN ENDING NEWLINE! */
     if(error == ERROR_EOF) {
       return CS229_DONE_READING;
     }
@@ -479,8 +480,6 @@ cs229ReadStatus_t readSamples(cs229Data_t* cd, int sampleLimit, int* samplesFill
   int i;
   int samplesFilledThisTime = 0;
   cs229ReadStatus_t status = CS229_NO_ERROR;
-  /*DEBUG TEST */
-  char* charData= (char*)cd->data;
   for(i = *samplesFilled; status == CS229_NO_ERROR && i < sampleLimit; i++) {
     status = readSample(cd, i * cd->numChannels, fp);
     ++samplesFilledThisTime;
@@ -571,9 +570,6 @@ int getSamplesInCs229Format(sound_t* sound, char* str, int size) {
     /* replace final space with newline */
     str[strlen(str)-1] = '\n';
   }
-  /* get rid of trailing newline */
-  str[charCount-1] = 0;
-  --charCount;
   return charCount;
 }
       

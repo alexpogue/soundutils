@@ -1,125 +1,168 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "fileUtils.h"
 #include "errorPrinter.h"
 
+void printHelp(char* cmd);
+readError_t getErrorFromSounds(sound_t** sounds, int numSounds);
+void handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, fileType_t* outputType, char** outputFileName);
 void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType);
 void concatenateData(sound_t* s1, sound_t* s2, sound_t* dest);
 
 int main(int argc, char** argv) {
-  if(argc < 2) {
-    /* read from stdin */
+  /* TODO: FIX FOR STDIN */
+  int i, fileLimit, numFiles;
+  char **fileNames, *outputFileName, isInputStdin;
+  sound_t *dest, **sounds;
+  fileType_t outputType;
+  sounds = NULL;
+  fileNames = NULL;
+  outputFileName = NULL;
+  numFiles = 0;
+  isInputStdin = 0;
+  /* allocate enough space for every arg or 1 spot for stdin */
+  fileLimit = argc;
+  fileNames = (char**)malloc(sizeof(char*) * argc);
+  if(!fileNames) {
+    printMemoryError();
+    exit(1);
   }
-  else {
-    int i;
-    char** fileNames = NULL;
-    char* outputFileName = NULL;
-    int fileLimit = 2;
-    int numFiles = 0;
-    sound_t* dest;
-    sound_t** sounds = NULL;
-    fileNames = (char**)malloc(fileLimit * sizeof(char*));
-    if(!fileNames) {
-      printf("Malloc failed!\n");
-      exit(1);
-    }
-    for(i = 1; i < argc; i++) {
-      if(argv[i][0] == '-') {
-        if(argv[i][1] == 'h') {
-          /* print help and exit(1)*/
-        }
-        else if(argv[i][1] == 'o') {
-          outputFileName = argv[i+1];
-          /* don't reread the file name as an input file */
-          ++i;
-        }
-        else if(argv[i][1] == 'w') {
-          /* set wav output flag */
-        }
-        else {
-          /* unknown command line flag error */
-        }
-      }
-      else {
-        int newNumFiles = numFiles + 1;
-        if(newNumFiles > fileLimit) {
-          fileLimit *= 2;
-          char** newFileNames = NULL;
-          newFileNames = (char**)realloc(fileNames, fileLimit * sizeof(char*));
-          if(!newFileNames) {
-            printf("Malloc failed!\n");
-            free(fileNames);
-            exit(1);
-          }
-          fileNames = newFileNames;
-        }
-        numFiles = newNumFiles;
-        fileNames[numFiles-1] = argv[i];
-      }
-    }
-    sounds = malloc(sizeof(sound_t*) * numFiles);
-    if(!sounds) {
-      printf("Malloc failed!\n");
-      free(fileNames);
-      exit(1);
-    }
-    for(i = 0; i < numFiles; i++) {
-      FILE* fp;
-      fp = fopen(fileNames[i], "rb");
-      if(!fp) {
-        fprintf(stderr, "File %s could not be opened\n", fileNames[i]);
-        free(fileNames);
-        free(sounds);
-        exit(1);
-      }
-      sounds[i] = loadSound(fp, fileNames[i]);
-      fclose(fp);
-      if(i >= 1) {
-        /*concatenateSounds(sounds[i-1], sounds[i], dest, CS229);*/
-      }
-    }
+  handleCommandLineArgs(argc, argv, fileNames, fileLimit, &numFiles, &outputType, &outputFileName);
+  /* numFiles of -1 means we printed help or had an invalid option */
+  if(numFiles == -1) {
+    exit(0);
+  }
+  if(numFiles == 0) {
+    /* for single-file stdin file input */
+    numFiles = 1;
+    isInputStdin = 1;
+  }
+  sounds = (sound_t**)malloc(sizeof(sound_t*) * numFiles);
+  if(!sounds) {
+    printMemoryError();
     free(fileNames);
-    if(sounds[0]->error == NO_ERROR && sounds[1]->error == NO_ERROR) {
-      dest = loadEmptySound();
-      concatenateSounds(sounds[0], sounds[1], dest, CS229);
+    exit(1);
+  }
+  if(isInputStdin) {
+    sounds[0] = loadSound(stdin, "StdinSound");
+  }
+  for(i = 0; i < numFiles && !isInputStdin; i++) {
+    FILE* fp;
+    fp = fopen(fileNames[i], "rb");
+    if(!fp) {
+      printFileOpenError(fileNames[i]);
+      free(fileNames);
+      free(sounds);
+      exit(1);
+    }
+    sounds[i] = loadSound(fp, fileNames[i]);
+    fclose(fp);
+    if(i >= 1) {
+      /*concatenateSounds(sounds[i-1], sounds[i], dest, CS229);*/
+    }
+  }
+  free(fileNames);
+  if(getErrorFromSounds(sounds, numFiles) == NO_ERROR) {
+    dest = loadEmptySound();
+    concatenateSounds(sounds[0], sounds[1], dest, CS229);
 
-      if(outputFileName == NULL) {
-        writeSoundToFile(dest, stdout);
-      }
-      else {
-        FILE* fp;
-        fp = fopen(outputFileName, "wb");
-        if(!fp) {
-          fprintf(stderr, "Could not open %s for writing\n", outputFileName);
-        }
-        writeSoundToFile(dest, fp);
-      }
-    
-      unloadSound(dest);
+    if(outputFileName == NULL) {
+      writeSoundToFile(dest, stdout);
     }
     else {
-      printErrorsInSound(sounds[0]);
-      printErrorsInSound(sounds[1]);
+      FILE* fp;
+      fp = fopen(outputFileName, "wb");
+      if(!fp) {
+        fprintf(stderr, "Could not open %s for writing\n", outputFileName);
+      }
+      writeSoundToFile(dest, fp);
     }
-    for(i = 0; i < numFiles; i++) {
-      unloadSound(sounds[i]);
-    }
-    free(sounds);
+  
+    unloadSound(dest);
   }
+  else {
+    for(i = 0; i < numFiles; i++) {
+      printErrorsInSound(sounds[i]);
+    }
+  }
+  for(i = 0; i < numFiles; i++) {
+    unloadSound(sounds[i]);
+  }
+  free(sounds);
   return 0;
 }
 
-/* concatenate sounds and store the concatenated sound into dest. Use the
-  format specified by resultType */
-void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType) {
+readError_t getErrorFromSounds(sound_t** sounds, int numSounds) {
+  while(numSounds) {
+    if(sounds[--numSounds]->error != NO_ERROR) {
+      return sounds[numSounds]->error;
+    }
+  }
+  return NO_ERROR;
+}
+
+void handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, fileType_t* outputType, char** outputFileName) {
+  int i;
+  /* will be reset to WAV if we see -w option */
+  *outputType = CS229;
+  for(i = 1; i < argc; i++) {
+    if(argv[i][0] == '-') {
+      if(argv[i][1] == 'h') {
+        printHelp(argv[0]);
+        *numFilesRead = -1;
+        return;
+      }
+      else if(argv[i][1] == 'o') {
+        *outputFileName = argv[i+1];
+        /* don't reread the file name as an input file */
+        ++i;
+      }
+      else if(argv[i][1] == 'w') {
+        *outputType = WAVE;
+      }
+      else {
+        printInvalidOptionError(argv[i][1]);
+        *numFilesRead = -1;
+        return;
+      }
+    }
+    else {
+      fileNames[(*numFilesRead)++] = argv[i];
+    }
+  }
+}
+
+void printHelp(char* cmd) {
+  printf("Sndcat Help:\n");
+  printf("Usage %s file1 [, file2, ...] [options]\n", cmd);
+  printf("This program reads the file(s) passed as arguments, concatenates them, and writes\n");
+  printf("it to a file (defaults to stdout)\n");
+  printf("Options:\n");
+  printf("-h\t\tdisplays this help page\n");
+  printf("-o [file]\t\toutput to a file rather than standard out\n");
+}
+ 
+/** 
+  Convert file to another file type. If file is already the correct type it does
+  not do anything.
+*/
+void convertToFileType(fileType_t resultType, sound_t* sound) {
   if(resultType == CS229) {
-    waveToCs229(s1);
-    waveToCs229(s2);
+    waveToCs229(sound);
   }
   else if(resultType == WAVE) {
-    cs229ToWave(s1);
-    cs229ToWave(s2);
+    cs229ToWave(sound);
   }
+}
+
+/**
+  concatenate sounds and store the concatenated sound into dest. Use the
+  format specified by resultType 
+*/
+void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType) {
+  convertToFileType(resultType, s1);
+  convertToFileType(resultType, s2);
   if(s1->sampleRate != s2->sampleRate) {
     fprintf(stderr, "Incompatible sample rate error\n");
     return;
@@ -160,7 +203,9 @@ void concatenateData(sound_t* s1, sound_t* s2, sound_t* dest) {
   /* we can access these as chars because we are only writing them */
   char* newData = (char*)realloc(dest->rawData, newDataSize);
   if(!newData) {
-    fprintf(stderr, "Malloc failed\n");
+    printMemoryError();
+    dest->error = ERROR_MEMORY;
+    return;
   }
   dest->rawData = newData;
   if(s1->fileType != s2->fileType 
