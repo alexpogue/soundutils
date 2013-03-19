@@ -6,7 +6,7 @@
 
 void printHelp(char* cmd);
 readError_t getErrorFromSounds(sound_t** sounds, int numSounds);
-void handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, fileType_t* outputType, char** outputFileName);
+fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, char** outputFileName);
 void concatenateSoundArray(sound_t* dest, sound_t** sounds, int numSounds);
 void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType);
 void deepCopySound(sound_t* dest, sound_t src);
@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     printMemoryError();
     exit(1);
   }
-  handleCommandLineArgs(argc, argv, fileNames, fileLimit, &numFiles, &outputType, &outputFileName);
+  outputType = handleCommandLineArgs(argc, argv, fileNames, fileLimit, &numFiles, &outputFileName);
   /* numFiles of -1 means we printed help or had an invalid option */
   if(numFiles == -1) {
     exit(0);
@@ -107,16 +107,16 @@ readError_t getErrorFromSounds(sound_t** sounds, int numSounds) {
   return NO_ERROR;
 }
 
-void handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, fileType_t* outputType, char** outputFileName) {
+fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, char** outputFileName) {
   int i;
   /* will be reset to WAV if we see -w option */
-  *outputType = CS229;
+  fileType_t outputType = CS229;
   for(i = 1; i < argc; i++) {
     if(argv[i][0] == '-') {
       if(argv[i][1] == 'h') {
         printHelp(argv[0]);
         *numFilesRead = -1;
-        return;
+        return outputType;
       }
       else if(argv[i][1] == 'o') {
         *outputFileName = argv[i+1];
@@ -124,18 +124,19 @@ void handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity
         ++i;
       }
       else if(argv[i][1] == 'w') {
-        *outputType = WAVE;
+        outputType = WAVE;
       }
       else {
         printInvalidOptionError(argv[i][1]);
         *numFilesRead = -1;
-        return;
+        return outputType;
       }
     }
     else {
       fileNames[(*numFilesRead)++] = argv[i];
     }
   }
+  return outputType;
 }
 
 void printHelp(char* cmd) {
@@ -163,11 +164,16 @@ void convertToFileType(fileType_t resultType, sound_t* sound) {
 
 /**
   Concatenate numSounds sounds from the sound_t* array and put the resulting
-  sound into dest. Changes the value of sounds[0];
+  sound into dest. 
 */
 void concatenateSoundArray(sound_t* dest, sound_t** sounds, int numSounds) {
   int i;
+  fileType_t oldType;
+  convertToFileType(dest->fileType, sounds[0]);
+  /* "un"copy the file type of sounds[0] */
+  oldType = dest->fileType;
   deepCopySound(dest, *sounds[0]);
+  dest->fileType = oldType;
   for(i = 0; i < numSounds; i++) {
     convertToFileType(dest->fileType, sounds[i]);
   }
