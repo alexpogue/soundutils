@@ -7,8 +7,13 @@
 void printHelp(char* cmd);
 readError_t getErrorFromSounds(sound_t** sounds, int numSounds);
 void handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, fileType_t* outputType, char** outputFileName);
+void concatenateSoundArray(sound_t* dest, sound_t** sounds, int numSounds);
 void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType);
+void deepCopySound(sound_t* dest, sound_t src);
+void ensureBitDepth(sound_t* s1, sound_t* s2);
+void ensureNumChannels(sound_t* s1, sound_t* s2);
 void concatenateData(sound_t* s1, sound_t* s2, sound_t* dest);
+void concatenateData2(sound_t* dest, sound_t* append);
 
 int main(int argc, char** argv) {
   /* TODO: FIX FOR STDIN */
@@ -58,25 +63,25 @@ int main(int argc, char** argv) {
     }
     sounds[i] = loadSound(fp, fileNames[i]);
     fclose(fp);
-    if(i >= 1) {
-      /*concatenateSounds(sounds[i-1], sounds[i], dest, CS229);*/
-    }
   }
   free(fileNames);
   if(getErrorFromSounds(sounds, numFiles) == NO_ERROR) {
     dest = loadEmptySound();
-    concatenateSounds(sounds[0], sounds[1], dest, CS229);
+    dest->fileType = outputType;
+    concatenateSoundArray(dest, sounds, numFiles);
 
     if(outputFileName == NULL) {
-      writeSoundToFile(dest, stdout);
+      writeSoundToFile(dest, stdout, outputType);
     }
     else {
       FILE* fp;
       fp = fopen(outputFileName, "wb");
       if(!fp) {
-        fprintf(stderr, "Could not open %s for writing\n", outputFileName);
+        printFileOpenError(outputFileName);
+        free(sounds);
+        exit(1);
       }
-      writeSoundToFile(dest, fp);
+      writeSoundToFile(dest, fp, outputType);
     }
   
     unloadSound(dest);
@@ -157,6 +162,52 @@ void convertToFileType(fileType_t resultType, sound_t* sound) {
 }
 
 /**
+  Concatenate numSounds sounds from the sound_t* array and put the resulting
+  sound into dest. Changes the value of sounds[0];
+*/
+void concatenateSoundArray(sound_t* dest, sound_t** sounds, int numSounds) {
+  int i;
+  deepCopySound(dest, *sounds[0]);
+  for(i = 0; i < numSounds; i++) {
+    convertToFileType(dest->fileType, sounds[i]);
+  }
+  for(i = 1; i < numSounds; i++) {
+    concatenateSounds(dest, sounds[i], dest, dest->fileType);
+  }
+}
+
+/**
+  Copy the members of src to sound pointed to by dest.
+*/
+void deepCopySound(sound_t* dest, sound_t src) {
+  int i;
+  char* srcCharData = (char*)src.rawData;
+  char** destCharData = (char**)&(dest->rawData);
+  void* newData = realloc(dest->rawData, src.dataSize);
+  dest->sampleRate = src.sampleRate;
+  dest->fileType = src.fileType;
+  dest->fileName = (char*)malloc(strlen(src.fileName) + 1);
+  if(!dest->fileName) {
+    dest->error = ERROR_MEMORY;
+    return;
+  }
+  strcpy(dest->fileName, src.fileName);
+  
+  if(!newData) {
+    dest->error = ERROR_MEMORY;
+    return;
+  }
+  dest->rawData = newData;
+  for(i = 0; i < src.dataSize; i++) {
+    (*destCharData)[i] = srcCharData[i];
+  }
+  dest->dataSize = src.dataSize;
+  dest->error = src.error;
+  dest->numChannels = src.numChannels;
+  dest->bitDepth = src.bitDepth;
+}
+
+/**
   concatenate sounds and store the concatenated sound into dest. Use the
   format specified by resultType 
 */
@@ -167,39 +218,40 @@ void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resul
     fprintf(stderr, "Incompatible sample rate error\n");
     return;
   }
-  if(s1->bitDepth > s2->bitDepth) {    
-    dest->bitDepth = s1->bitDepth;
-    scaleBitDepth(s1->bitDepth, s2);
-  }
-  else if(s1->bitDepth < s2->bitDepth) {
-    dest->bitDepth = s2->bitDepth;
-    scaleBitDepth(s2->bitDepth, s1);
-  }
-  else {
-    dest->bitDepth = s1->bitDepth;
-  }
-  if(s1->numChannels > s2->numChannels) {
-    int numChannelsToAdd = s1->numChannels - s2->numChannels;
-    dest->numChannels = s1->numChannels;
-    addZeroedChannels(numChannelsToAdd, s2);
-  }
-  else if(s1->numChannels < s2->numChannels) {
-    int numChannelsToAdd = s2->numChannels - s1->numChannels;
-    dest->numChannels = s2->numChannels;
-    addZeroedChannels(numChannelsToAdd, s1);
-  }
-  else {
-    dest->numChannels = s1->numChannels;
-  }
-  concatenateData(s1, s2, dest);
+  ensureBitDepth(s1, s2);
+  dest->bitDepth = s1->bitDepth;
+  ensureNumChannels(s1, s2);
+  dest->numChannels = s1->numChannels;
+
+  concatenateData2(s1, s2);
   dest->sampleRate = s1->sampleRate;
   dest->fileType = resultType;
 }
 
-void concatenateData(sound_t* s1, sound_t* s2, sound_t* dest) {
+void ensureBitDepth(sound_t* s1, sound_t* s2) {
+  if(s1->bitDepth > s2->bitDepth) {    
+    scaleBitDepth(s1->bitDepth, s2);
+  }
+  else if(s1->bitDepth < s2->bitDepth) {
+    scaleBitDepth(s2->bitDepth, s1);
+  }
+}
+
+void ensureNumChannels(sound_t* s1, sound_t* s2) {
+  if(s1->numChannels > s2->numChannels) {
+    int numChannelsToAdd = s1->numChannels - s2->numChannels;
+    addZeroedChannels(numChannelsToAdd, s2);
+  }
+  else if(s1->numChannels < s2->numChannels) {
+    int numChannelsToAdd = s2->numChannels - s1->numChannels;
+    addZeroedChannels(numChannelsToAdd, s1);
+  }
+}
+
+void concatenateData2(sound_t* dest, sound_t* append) {
   int i;
-  char *s1CharData, *s2CharData, *destCharData;
-  int newDataSize = s1->dataSize + s2->dataSize;
+  char *destCharData, *appendCharData;
+  int newDataSize = dest->dataSize + append->dataSize;
   /* we can access these as chars because we are only writing them */
   char* newData = (char*)realloc(dest->rawData, newDataSize);
   if(!newData) {
@@ -208,22 +260,17 @@ void concatenateData(sound_t* s1, sound_t* s2, sound_t* dest) {
     return;
   }
   dest->rawData = newData;
-  if(s1->fileType != s2->fileType 
-    || s1->sampleRate != s2->sampleRate 
-    || s1->bitDepth != s2->bitDepth
-    || s1->numChannels != s2->numChannels) {
+  if(dest->fileType != append->fileType 
+    || dest->sampleRate != append->sampleRate 
+    || dest->bitDepth != append->bitDepth
+    || dest->numChannels != append->numChannels) {
     /* TODO: REMOVE THIS TEST PRINT */
     printf("We cannot cat these two sounds!\n");
   }
-
-  s1CharData = (char*)s1->rawData;
-  s2CharData = (char*)s2->rawData;
   destCharData = (char*)dest->rawData;
-  for(i = 0; i < s1->dataSize; i++) {
-    destCharData[i] = s1CharData[i];
-  }
-  for(i = 0; i < s2->dataSize; i++) {
-    destCharData[i + s1->dataSize] = s2CharData[i];
+  appendCharData = (char*)append->rawData;
+  for(i = 0; i < append->dataSize; i++) {
+    destCharData[dest->dataSize + i] = appendCharData[i];
   }
   dest->dataSize = newDataSize;
 }

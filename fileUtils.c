@@ -254,11 +254,11 @@ void addZeroedChannels(int howMany, sound_t* sound) {
   sound->numChannels = newNumChannels;
 } 
 
-writeError_t writeSoundToFile(sound_t* sound, FILE* fp) { 
-  if(sound->fileType == CS229) {
+writeError_t writeSoundToFile(sound_t* sound, FILE* fp, fileType_t outputType) { 
+  if(outputType == CS229) {
     writeCs229File(sound, fp);
   }
-  else if(sound->fileType == WAVE) {
+  else if(outputType == WAVE) {
     /*writeWaveFile(sound, fp);*/
   }
   return 0;
