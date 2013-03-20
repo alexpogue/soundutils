@@ -80,6 +80,7 @@ int main(int argc, char** argv) {
         exit(1);
       }
       writeSoundToFile(dest, fp, outputType);
+      fclose(fp);
     }
   
     unloadSound(dest);
