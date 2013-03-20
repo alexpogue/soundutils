@@ -426,7 +426,6 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
     /* to reach the next sample data */
     error = readUntilNonWhitespace(&dataStr[0], fp);
     error = readUntilWhitespace(&dataStr[1], 12, fp);
-    /* TODO: CORRECT THIS BY WRITING FILE WITH AN ENDING NEWLINE! */
     if(error == ERROR_EOF) {
       return CS229_DONE_READING;
     }
@@ -532,15 +531,10 @@ int getMaxCharsPerSample(sound_t* sound) {
 
 /* TODO: improve bounds checking */
 int getSamplesInCs229Format(sound_t* sound, char* str, int size) {
-  int maxCharsPerSample = getMaxCharsPerSample(sound);
   int numSamples = calculateNumSamples(sound);
-  int maxCharsAllSamples = maxCharsPerSample * numSamples; 
   int i, j;
   int charCount = 0;
   char** sampleStrings = malloc(sizeof(char**) * numSamples * sound->numChannels);
-  if(maxCharsAllSamples < size) {
-    printf("May overflow, not enough room for max num chars\n");
-  }
   for(i = 0; i < numSamples; i++) {
     int currSampleIndex = i * sound->numChannels;
     int maxCharsPerData;
@@ -557,14 +551,14 @@ int getSamplesInCs229Format(sound_t* sound, char* str, int size) {
         short* shortData = (short*)sound->rawData;
         /* 8 chars to fit "-32767 \0" */
         maxCharsPerData = 8;
-        sampleStrings[currDataIndex] = (char*)malloc(maxCharsPerData);
+        sampleStrings[currDataIndex] = malloc(maxCharsPerData);
         snprintf(sampleStrings[currDataIndex], maxCharsPerData, "%hd ", shortData[currDataIndex]);
       }
       else if(sound->bitDepth == 32) {
         long* longData = (long*)sound->rawData;
         /* 13 chars to fit "-2147483648 \0" */
         maxCharsPerData = 13;
-        sampleStrings[currDataIndex] = (char*)malloc(maxCharsPerData);
+        sampleStrings[currDataIndex] = malloc(maxCharsPerData);
         snprintf(sampleStrings[currDataIndex], maxCharsPerData, "%ld ", longData[currDataIndex]);
       }
       if(charCount >= size) {
@@ -597,11 +591,17 @@ int makeSampleString(char* result, char** singleSamples, sound_t* sound){
     }
     result[pos++] = '\n';
   }
+  result[pos++] = 0;
   return pos;
+}
+
+int getMaxSizeSamples(sound_t* sound) {
+  int nullTerminatorByte = 1;
+  return getMaxCharsPerSample(sound) * calculateNumSamples(sound) + nullTerminatorByte;
 }
       
 writeError_t writeCs229File(sound_t* sound, FILE* fp) {
-  int maxSizeSamples = getMaxCharsPerSample(sound) * calculateNumSamples(sound);
+  int maxSizeSamples = getMaxSizeSamples(sound);
   char* sampleData = NULL;
   sampleData = malloc(maxSizeSamples);
   if(!sampleData) {
