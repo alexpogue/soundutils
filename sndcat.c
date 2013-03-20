@@ -12,11 +12,9 @@ void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resul
 void deepCopySound(sound_t* dest, sound_t src);
 void ensureBitDepth(sound_t* s1, sound_t* s2);
 void ensureNumChannels(sound_t* s1, sound_t* s2);
-void concatenateData(sound_t* s1, sound_t* s2, sound_t* dest);
-void concatenateData2(sound_t* dest, sound_t* append);
+void concatenateData(sound_t* dest, sound_t* append);
 
 int main(int argc, char** argv) {
-  /* TODO: FIX FOR STDIN */
   int i, fileLimit, numFiles;
   char **fileNames, *outputFileName, isInputStdin;
   sound_t *dest, **sounds;
@@ -229,7 +227,7 @@ void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resul
   ensureNumChannels(s1, s2);
   dest->numChannels = s1->numChannels;
 
-  concatenateData2(s1, s2);
+  concatenateData(s1, s2);
   dest->sampleRate = s1->sampleRate;
   dest->fileType = resultType;
 }
@@ -254,7 +252,7 @@ void ensureNumChannels(sound_t* s1, sound_t* s2) {
   }
 }
 
-void concatenateData2(sound_t* dest, sound_t* append) {
+void concatenateData(sound_t* dest, sound_t* append) {
   int i;
   char *destCharData, *appendCharData;
   int newDataSize = dest->dataSize + append->dataSize;
