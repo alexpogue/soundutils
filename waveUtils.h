@@ -118,4 +118,10 @@ void wavReadBlockAlign(FILE* fp, wavData_t* wd);
 */
 void wavReadBitDepth(FILE* fp, wavData_t* wd);
 
+/**
+  Writes wave file data from sound to fp.
+  TODO: Improve error handling
+*/
+writeError_t writeWaveFile(sound_t* sound, FILE* fp);
+
 #endif

@@ -51,12 +51,12 @@ void wavFindAndReadChunk(FILE* fp, wavData_t* wd, chunkId_t cId);
 void wavReadSoundData(FILE* fp, wavData_t* wd);
 
 void wavRead(FILE* fp, sound_t* sound) {
-  wavData_t* wData = (wavData_t*) malloc(sizeof(wavData_t));
+  wavData_t* wData = malloc(sizeof(wavData_t));
   if(!wData) {
     sound->error = ERROR_MEMORY;
     return;
   }
-
+  wData->error = NO_ERROR;
   wData->dataChunkSize = 0;
 
   wavFindAndReadChunk(fp, wData, CHUNK_FMT);
@@ -104,7 +104,7 @@ void wavToSound(wavData_t* wd, sound_t* sound) {
   sound->dataSize = wd->dataChunkSize;
   sound->error = wd->error;
   sound->rawData = wd->data;
-}   
+}
 
 void wavReadFmtChunk(FILE* fp, wavData_t* wd) {
   if(wd->error != NO_ERROR) return;
@@ -124,7 +124,6 @@ void wavReadFmtChunk(FILE* fp, wavData_t* wd) {
   if(wd->bitDepth != 8 && wd->bitDepth != 16 && wd->bitDepth != 32) {
     wd->error = ERROR_BIT_DEPTH;
   }
-  /* TODO: ensure bit depth is a proper value (8,16,32) Adventurous? support 24 */
 
   /* ignore fmt chunk's extra parameters (numBytes - 16 previously read bytes */
   /* we make sure numBytesInChunk is >16 so we don't try ignoring negative bytes!*/
@@ -135,21 +134,15 @@ void wavReadDataChunk(FILE* fp, wavData_t* wd) {
   if(wd->error != NO_ERROR) return;
   wavReadNumRemainingBytesInChunk(fp, wd);
   if(wd->error != NO_ERROR) return;
-  if(wd->bitDepth == 8 && wd->numBytesInChunk > 0) {
-    wd->data = (unsigned char*) malloc(wd->numBytesInChunk);
-  }
-  else if(wd->bitDepth == 16 && wd->numBytesInChunk > 0) {
-    wd->data = (signed short*) malloc(wd->numBytesInChunk);
-  }
-  else if(wd->bitDepth == 32 && wd->numBytesInChunk > 0) {
-    wd->data = (signed int*) malloc(wd->numBytesInChunk);
-  }
-  if((wd->bitDepth == 8 && !wd->data) || 
-    (wd->bitDepth == 16 && !wd->data) ||
-    (wd->bitDepth == 32 && !wd->data) ) 
-  {
-    wd->error = ERROR_MEMORY;
-    return;
+  if(wd->bitDepth == 8 || wd->bitDepth == 16 || wd->bitDepth == 32) {
+    /* if numBytesInChunk is 0, malloc can give a non-freeable pointer */
+    if(wd->numBytesInChunk > 0) {
+      wd->data = malloc(wd->numBytesInChunk);
+    }
+    if(!wd->data) {
+      wd->error = ERROR_MEMORY;
+      return;
+    }
   }
   wd->dataChunkSize = wd->numBytesInChunk; 
   wavReadSoundData(fp, wd);
@@ -222,4 +215,88 @@ void wavReadBlockAlign(FILE* fp, wavData_t* wd) {
 void wavReadBitDepth(FILE* fp, wavData_t* wd) {
   if(wd->error != NO_ERROR) return;
   wd->error = readBytes(&wd->bitDepth, 2, fp);
+}
+
+writeError_t writeHeader(sound_t* sound, FILE* fp) {
+  /* header size plus the data chunk id minus 8 for "RIFF####" = 36 */
+  char riffHead[] = {'R', 'I', 'F', 'F'};
+  unsigned long fileSize = {sound->dataSize + 36};
+  char waveHead[] = {'W', 'A', 'V', 'E'};
+  if(fwrite(riffHead, 1, 4, fp) != 4) {
+    return WRITE_ERROR_TOO_FEW_CHARS;
+  }
+  if(fwrite(&fileSize, 4, 1, fp) != 1) {
+    return WRITE_ERROR_TOO_FEW_CHARS;
+  }
+  if(fwrite(waveHead, 1, 4, fp) != 4) {
+    return WRITE_ERROR_TOO_FEW_CHARS;
+  }
+  return WRITE_SUCCESS;
+}
+
+writeError_t writeFmtChunk(sound_t* sound, FILE* fp) {
+  char fmtHead[4] = {'f', 'm', 't', ' '};
+  unsigned long fmtSize = 16;
+  unsigned short audioFormat = 1;
+  unsigned short numChannels = sound->numChannels;
+  unsigned long sampleRate = sound->sampleRate;
+  unsigned long byteRate = sound->sampleRate * sound->numChannels * sound->bitDepth / 8;
+  unsigned short blockAlign = sound->numChannels * sound->bitDepth / 8;
+  unsigned short bitDepth = sound->bitDepth;
+  if(fwrite(fmtHead, 1, 4, fp) != 4) {
+    return WRITE_ERROR_TOO_FEW_CHARS;
+  }
+  if(fwrite(&fmtSize, 4, 1, fp) != 1) {
+    return WRITE_ERROR_TOO_FEW_CHARS;
+  }
+  if(fwrite(&audioFormat, 2, 1, fp) != 1) {
+    return WRITE_ERROR_TOO_FEW_CHARS;
+  }
+  if(fwrite(&numChannels, 2, 1, fp) != 1) {
+    return WRITE_ERROR_TOO_FEW_CHARS;
+  } 
+  if(fwrite(&sampleRate, 4, 1, fp) != 1) {
+    return WRITE_ERROR_TOO_FEW_CHARS;
+  }
+  if(fwrite(&byteRate, 4, 1, fp) != 1) {
+    return WRITE_ERROR_TOO_FEW_CHARS;
+  }
+  if(fwrite(&blockAlign, 2, 1, fp) != 1) {
+    return WRITE_ERROR_TOO_FEW_CHARS;
+  }
+  if(fwrite(&bitDepth, 2, 1, fp) != 1) {
+    return WRITE_ERROR_TOO_FEW_CHARS;
+  }
+  return WRITE_SUCCESS;
+}
+
+writeError_t writeDataChunk(sound_t* sound, FILE* fp) {
+  char dataHead[] = {'d', 'a', 't', 'a'};
+  unsigned long dataSize = sound->dataSize;
+  char* charData = sound->rawData;
+  if(!charData) {
+    return WRITE_ERROR_MEMORY;
+  }
+  if(fwrite(dataHead, 1, 4, fp) != 4) {
+    return WRITE_ERROR_TOO_FEW_CHARS;
+  }
+  if(fwrite(&dataSize, 4, 1, fp) != 1) {
+    return WRITE_ERROR_TOO_FEW_CHARS;
+  }
+  if(fwrite(charData, 1, sound->dataSize, fp) != sound->dataSize) {
+    return WRITE_ERROR_TOO_FEW_CHARS;
+  }
+  return WRITE_SUCCESS;
+}
+
+writeError_t writeWaveFile(sound_t* sound, FILE* fp) {
+  writeError_t error = WRITE_SUCCESS;
+  error = writeHeader(sound, fp);
+  if(error == WRITE_SUCCESS) {
+    error = writeFmtChunk(sound, fp);
+  }
+  if(error == WRITE_SUCCESS) {
+    error = writeDataChunk(sound, fp);
+  }
+  return error;
 }

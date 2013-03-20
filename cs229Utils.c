@@ -29,7 +29,7 @@ typedef enum {
 
 typedef struct {
   void* data;
-  unsigned short numSamples;
+  unsigned long numSamples;
   unsigned short sampleRate;
   unsigned char numChannels;
   unsigned char bitres;
@@ -98,6 +98,12 @@ void cs229ToSound(cs229Data_t* cd, sound_t* sound);
 unsigned int calculateDataSize(cs229Data_t* cd);
 
 /**
+  Takes a 2d array of singleSamples and concatenates them together into result.
+  Result will be the sampleData as defined by the CS229 spec under "StartData".
+*/
+int makeSampleString(char* result, char** singleSamples, sound_t* sound);
+
+/**
   Convert the first num characters in p to lowercase.
 */
 void toLowerCase(char* p, size_t num) {
@@ -105,10 +111,11 @@ void toLowerCase(char* p, size_t num) {
 }
 
 void cs229Read(FILE* fp, sound_t* sound) {
-  cs229Data_t* cData = (cs229Data_t*)malloc(sizeof(cs229Data_t));
+  cs229Data_t* cData = malloc(sizeof(cs229Data_t));
   keyword_t keyword;
   cs229ReadStatus_t sampleReadStatus;
   long bytesAvailable = 16;
+  long bytesUsed = 0;
   int samplesRead = 0;
   void* newData = NULL;
 
@@ -149,14 +156,15 @@ void cs229Read(FILE* fp, sound_t* sound) {
     sampleReadStatus = readSamples(cData, sampleLimit, &samplesRead, fp);
   } while(sampleReadStatus != CS229_DONE_READING && sound->error == NO_ERROR);
   cData->numSamples = samplesRead;
-  bytesAvailable = samplesRead * cData->numChannels * cData->bitres / 8;
-  /* reallocate to fix overestimation of data size from do/while loop */
-  newData = realloc(cData->data, bytesAvailable);
-  if(!newData) {
+  bytesUsed = samplesRead * cData->numChannels * cData->bitres / 8;
+    /* reallocate to fix overestimation of data size from do/while loop */
+  newData = realloc(cData->data, bytesUsed);
+  if(!newData && bytesUsed > 0) {
     sound->error = ERROR_MEMORY;
     free(cData);
     return;
   }
+  bytesAvailable = bytesUsed;
   cData->data = newData;
       
   cs229ToSound(cData, sound);
@@ -196,7 +204,7 @@ signed char longToChar(long makeMeAChar) {
 
 unsigned int longToUShort(unsigned long makeMeAUShort) {
   if(makeMeAUShort > USHRT_MAX) {
-    printf("%ld is out of uint range", makeMeAUShort);
+    printf("%ld is out of ushort range", makeMeAUShort);
     return !makeMeAUShort;
   }
   return (unsigned int)makeMeAUShort;
@@ -230,7 +238,7 @@ keyword_t storeKeywordValue(char* keywordStr, char* valueStr, cs229Data_t* cd) {
   }
   switch(kw) {
     case KEYWORD_SAMPLES:
-      samples = longToUShort(val);
+      samples = val;
       if(val != samples) return KEYWORD_BADVALUE;
       cd->numSamples = samples;
       break;
@@ -525,62 +533,81 @@ int getMaxCharsPerSample(sound_t* sound) {
 /* TODO: improve bounds checking */
 int getSamplesInCs229Format(sound_t* sound, char* str, int size) {
   int maxCharsPerSample = getMaxCharsPerSample(sound);
-  int maxCharsAllSamples = maxCharsPerSample * calculateNumSamples(sound);
+  int numSamples = calculateNumSamples(sound);
+  int maxCharsAllSamples = maxCharsPerSample * numSamples; 
   int i, j;
   int charCount = 0;
+  char** sampleStrings = malloc(sizeof(char**) * numSamples * sound->numChannels);
   if(maxCharsAllSamples < size) {
     printf("May overflow, not enough room for max num chars\n");
   }
-  for(i = 0; i < calculateNumSamples(sound); i++) {
-    int currDataIndex = i * sound->numChannels;
+  for(i = 0; i < numSamples; i++) {
+    int currSampleIndex = i * sound->numChannels;
     int maxCharsPerData;
     for(j = 0; j < sound->numChannels; j++) {
-      int numCharsIntended;
-      char *singleData = NULL;
+      int currDataIndex = currSampleIndex + j;
       if(sound->bitDepth == 8) {
         char* charData = (char*)sound->rawData;
         /* 6 chars to fit "-127 \0" */
-        singleData = malloc(6);
         maxCharsPerData = 6;
-        numCharsIntended = snprintf(singleData, maxCharsPerData, "%d ", charData[currDataIndex + j]);
+        sampleStrings[currDataIndex] = malloc(maxCharsPerData);
+        snprintf(sampleStrings[currDataIndex], maxCharsPerData, "%d ", charData[currDataIndex]);
       }
       else if(sound->bitDepth == 16) {
         short* shortData = (short*)sound->rawData;
         /* 8 chars to fit "-32767 \0" */
-        singleData = malloc(8);
         maxCharsPerData = 8;
-        numCharsIntended = snprintf(singleData, maxCharsPerData, "%hd ", shortData[currDataIndex + j]);
+        sampleStrings[currDataIndex] = (char*)malloc(maxCharsPerData);
+        snprintf(sampleStrings[currDataIndex], maxCharsPerData, "%hd ", shortData[currDataIndex]);
       }
       else if(sound->bitDepth == 32) {
         long* longData = (long*)sound->rawData;
         /* 13 chars to fit "-2147483648 \0" */
-        singleData = malloc(13);
         maxCharsPerData = 13;
-        numCharsIntended = snprintf(singleData, maxCharsPerData, "%ld ", longData[currDataIndex + j]);
+        sampleStrings[currDataIndex] = (char*)malloc(maxCharsPerData);
+        snprintf(sampleStrings[currDataIndex], maxCharsPerData, "%ld ", longData[currDataIndex]);
       }
-      charCount += numCharsIntended;
       if(charCount >= size) {
         printf("Overflow while writing samples, code red.\n");
         printf("tried to read %d chars\n", charCount);
         return charCount;
       }
-      strncat(str, singleData, maxCharsPerData);
-      free(singleData);
     }
-    /* replace final space with newline */
-    str[strlen(str)-1] = '\n';
   }
+  charCount = makeSampleString(str, sampleStrings, sound); 
+  for(i = 0; i < numSamples * sound->numChannels; i++) {
+    free(sampleStrings[i]);
+  }
+  free(sampleStrings);
   return charCount;
+}
+
+int makeSampleString(char* result, char** singleSamples, sound_t* sound){
+  int i, j, k, pos, numSamples;
+  numSamples = calculateNumSamples(sound);
+  pos = 0;
+  for(i = 0; i < numSamples; i++) {
+    int sampleIndex = i * sound->numChannels;
+    for(j = 0; j < sound->numChannels; j++) {
+      int dataIndex = sampleIndex + j;
+      int currLen = strlen(singleSamples[dataIndex]);
+      for(k = 0; k < currLen; k++) {
+        result[pos++] = singleSamples[dataIndex][k];
+      }
+    }
+    result[pos++] = '\n';
+  }
+  return pos;
 }
       
 writeError_t writeCs229File(sound_t* sound, FILE* fp) {
   int maxSizeSamples = getMaxCharsPerSample(sound) * calculateNumSamples(sound);
   char* sampleData = NULL;
   sampleData = malloc(maxSizeSamples);
-  sampleData[0] = 0;
   if(!sampleData) {
     return WRITE_ERROR_MEMORY;
- }
+  } 
+  sampleData[0] = 0;
   getSamplesInCs229Format(sound, sampleData, maxSizeSamples);
   fprintf(fp, "CS229\n");
   fprintf(fp, "Samples %d\n", calculateNumSamples(sound));

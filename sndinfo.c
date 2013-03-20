@@ -7,8 +7,6 @@
 #include "errorPrinter.h"
 #include <limits.h>
 
-void printErrorsInSound(sound_t* sound);
-
 /**
   Converts type to the corresponding string and puts the result into str
 */

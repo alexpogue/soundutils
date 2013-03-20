@@ -15,7 +15,7 @@
   extract file data into the sound_t*. Returns NULL on memory error. 
 */
 sound_t* loadEmptySound() {
-  sound_t* sp = (sound_t*) malloc(sizeof(sound_t));
+  sound_t* sp = malloc(sizeof(sound_t));
   if(!sp) {
     return NULL;
   }
@@ -36,7 +36,7 @@ sound_t* loadSound(FILE* file, char* fileName) {
     return NULL;
   }
 
-  sp->fileName = (char*)malloc(strlen(fileName) + 1);
+  sp->fileName = malloc(strlen(fileName) + 1);
   if(!sp->fileName) {
     free(sp);
     return NULL;
@@ -259,7 +259,7 @@ writeError_t writeSoundToFile(sound_t* sound, FILE* fp, fileType_t outputType) {
     writeCs229File(sound, fp);
   }
   else if(outputType == WAVE) {
-    /*writeWaveFile(sound, fp);*/
+    writeWaveFile(sound, fp);
   }
   return 0;
 }

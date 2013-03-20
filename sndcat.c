@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
   isInputStdin = 0;
   /* allocate enough space for every arg or 1 spot for stdin */
   fileLimit = argc;
-  fileNames = (char**)malloc(sizeof(char*) * argc);
+  fileNames = malloc(sizeof(char*) * argc);
   if(!fileNames) {
     printMemoryError();
     exit(1);
@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     numFiles = 1;
     isInputStdin = 1;
   }
-  sounds = (sound_t**)malloc(sizeof(sound_t*) * numFiles);
+  sounds = malloc(sizeof(sound_t*) * numFiles);
   if(!sounds) {
     printMemoryError();
     free(fileNames);
@@ -192,7 +192,7 @@ void deepCopySound(sound_t* dest, sound_t src) {
   void* newData = realloc(dest->rawData, src.dataSize);
   dest->sampleRate = src.sampleRate;
   dest->fileType = src.fileType;
-  dest->fileName = (char*)malloc(strlen(src.fileName) + 1);
+  dest->fileName = malloc(strlen(src.fileName) + 1);
   if(!dest->fileName) {
     dest->error = ERROR_MEMORY;
     return;
