@@ -125,24 +125,26 @@ void cs229ToWave(sound_t* sound) {
 
 void waveToCs229(sound_t* sound) {
   int i;
-  unsigned char* charData = (unsigned char*)sound->rawData;
+  char* cs229Data = (char*)sound->rawData;
   if(sound->fileType == CS229) {
     /* already correct type */
     return;
   }
   if(sound->bitDepth == 8) {
+    /* waveData and cs229Data point to the same thing */
+    unsigned char* waveData = (unsigned char*)sound->rawData;
     /* convert samples to signed */
     for(i = 0; i < calculateNumSamples(sound); i++) {
-      charData[i] -= 128;
+      cs229Data[i] = waveData[i] - 128;
     }
   }
   /* trim MIN_VALUE samples to MIN_VALUE + 1 (ex. -128 samples to -127, -32768 to -32767, etc.) */
   for(i = 0; i < calculateNumSamples(sound); i++) {
-    if( (sound->bitDepth == 8 && charData[i] == -128)
-      || (sound->bitDepth == 16 && charData[i] == -32768)
-      || (sound->bitDepth == 32 && charData[i] < -2147483647) ) {
+    if( (sound->bitDepth == 8 && cs229Data[i] == -128)
+      || (sound->bitDepth == 16 && cs229Data[i] == -32768)
+      || (sound->bitDepth == 32 && cs229Data[i] < -2147483647) ) {
       /* we used < -2147483647 because we need to use LL suffix for one less */
-      charData[i] += 1;
+      cs229Data[i] += 1;
     }
   }
   sound->fileType = CS229;
