@@ -8,7 +8,7 @@ void printHelp(char* cmd);
 readError_t getErrorFromSounds(sound_t** sounds, int numSounds);
 fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, char** outputFileName);
 void concatenateSoundArray(sound_t* dest, sound_t** sounds, int numSounds);
-void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType);
+void concatenateSounds(sound_t* s1, sound_t* s2, fileType_t resultType);
 void deepCopySound(sound_t* dest, sound_t* src);
 void concatenateData(sound_t* dest, sound_t* append);
 
@@ -174,7 +174,7 @@ void concatenateSoundArray(sound_t* dest, sound_t** sounds, int numSounds) {
     convertToFileType(dest->fileType, sounds[i]);
   }
   for(i = 1; i < numSounds; i++) {
-    concatenateSounds(dest, sounds[i], dest, dest->fileType);
+    concatenateSounds(dest, sounds[i], dest->fileType);
   }
 }
 
@@ -215,16 +215,12 @@ void deepCopySound(sound_t* dest, sound_t* src) {
   concatenate sounds and store the concatenated sound into dest. Use the
   format specified by resultType 
 */
-void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType) {
-  if(ensureSoundsCanConcatenate(s1, s2, resultType) == -1) {
+void concatenateSounds(sound_t* dest, sound_t* src, fileType_t resultType) {
+  if(ensureSoundsCanConcatenate(dest, src, resultType) == -1) {
     printSampleRateError();
     return;
   }
-  dest->bitDepth = s1->bitDepth;
-  dest->numChannels = s1->numChannels;
-  concatenateData(s1, s2);
-  dest->sampleRate = s1->sampleRate;
-  dest->fileType = resultType;
+  concatenateData(dest, src);
 }
 
 void concatenateData(sound_t* dest, sound_t* append) {
