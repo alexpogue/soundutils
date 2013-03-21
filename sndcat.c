@@ -10,8 +10,6 @@ fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int ca
 void concatenateSoundArray(sound_t* dest, sound_t** sounds, int numSounds);
 void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType);
 void deepCopySound(sound_t* dest, sound_t src);
-void ensureBitDepth(sound_t* s1, sound_t* s2);
-void ensureNumChannels(sound_t* s1, sound_t* s2);
 void concatenateData(sound_t* dest, sound_t* append);
 
 int main(int argc, char** argv) {
@@ -196,6 +194,7 @@ void concatenateSoundArray(sound_t* dest, sound_t** sounds, int numSounds) {
 /**
   Copy the members of src to sound pointed to by dest.
 */
+/* TODO: pass two pointers instead */
 void deepCopySound(sound_t* dest, sound_t src) {
   int i;
   char* srcCharData = (char*)src.rawData;
@@ -243,26 +242,6 @@ void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resul
   concatenateData(s1, s2);
   dest->sampleRate = s1->sampleRate;
   dest->fileType = resultType;
-}
-
-void ensureBitDepth(sound_t* s1, sound_t* s2) {
-  if(s1->bitDepth > s2->bitDepth) {    
-    scaleBitDepth(s1->bitDepth, s2);
-  }
-  else if(s1->bitDepth < s2->bitDepth) {
-    scaleBitDepth(s2->bitDepth, s1);
-  }
-}
-
-void ensureNumChannels(sound_t* s1, sound_t* s2) {
-  if(s1->numChannels > s2->numChannels) {
-    int numChannelsToAdd = s1->numChannels - s2->numChannels;
-    addZeroedChannels(numChannelsToAdd, s2);
-  }
-  else if(s1->numChannels < s2->numChannels) {
-    int numChannelsToAdd = s2->numChannels - s1->numChannels;
-    addZeroedChannels(numChannelsToAdd, s1);
-  }
 }
 
 void concatenateData(sound_t* dest, sound_t* append) {

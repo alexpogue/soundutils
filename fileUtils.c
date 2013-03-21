@@ -150,6 +150,26 @@ void waveToCs229(sound_t* sound) {
   sound->fileType = CS229;
 }
 
+void ensureBitDepth(sound_t* s1, sound_t* s2) {
+  if(s1->bitDepth > s2->bitDepth) {    
+    scaleBitDepth(s1->bitDepth, s2);
+  }
+  else if(s1->bitDepth < s2->bitDepth) {
+    scaleBitDepth(s2->bitDepth, s1);
+  }
+}
+
+void ensureNumChannels(sound_t* s1, sound_t* s2) {
+  if(s1->numChannels > s2->numChannels) {
+    int numChannelsToAdd = s1->numChannels - s2->numChannels;
+    addZeroedChannels(numChannelsToAdd, s2);
+  }
+  else if(s1->numChannels < s2->numChannels) {
+    int numChannelsToAdd = s2->numChannels - s1->numChannels;
+    addZeroedChannels(numChannelsToAdd, s1);
+  }
+}
+
 float ipow(int base, int exp) {
   int i; 
   float origBase, fBase;

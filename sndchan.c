@@ -28,8 +28,12 @@ int main(int argc, char** argv) {
     exit(1);
   }
   outputType = handleCommandLineArgs(argc, argv, fileNames, fileLimit, &numFiles, &outputChannel, &outputFileName);
+  for(i = 0; i < numFiles; i++) {
+    printf("filename %d: %s\n", i, fileNames[i]);
+  }
   if(numFiles == -1) {
     /* means we printed help or invalid option */
+    free(fileNames);
     exit(0);
   }
   if(numFiles == 0) {
@@ -57,6 +61,10 @@ int main(int argc, char** argv) {
     sounds[i] = loadSound(fp, fileNames[i]);
     fclose(fp);
   }
+  for(i = 0; i < numFiles; i++) {
+    unloadSound(sounds[i]);
+  }
+  free(sounds);
   free(fileNames);
   return 0;
 }
