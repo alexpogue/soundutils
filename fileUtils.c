@@ -171,7 +171,6 @@ int ensureSoundChannelsCombinable(sound_t* s1, sound_t* s2, fileType_t resultTyp
   return 0;
 }
 
-
 int ensureSoundsCanConcatenate(sound_t* s1, sound_t* s2, fileType_t resultType) {
   if(ensureSoundsCombinable(s1, s2, resultType) == -1) {
     return -1;
@@ -224,6 +223,7 @@ void ensureChannelLength(sound_t* s1, sound_t* s2) {
 }
 
 void addDataToEndOfSound(sound_t* sound, unsigned int numData) {
+  sound->dataSize += numData;
   while(numData--) addSample(sound);
 }
 
