@@ -219,7 +219,7 @@ void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resul
   convertToFileType(resultType, s1);
   convertToFileType(resultType, s2);
   if(s1->sampleRate != s2->sampleRate) {
-    fprintf(stderr, "Incompatible sample rate error\n");
+    printSampleRateError();
     return;
   }
   ensureBitDepth(s1, s2);
