@@ -157,19 +157,6 @@ void printHelp(char* cmd) {
   printf("-o [file]\toutput to a file rather than standard out\n");
   printf("-w\t\toutput in the WAVE format rather than CS229\n");
 }
- 
-/** 
-  Convert file to another file type. If file is already the correct type it does
-  not do anything.
-*/
-void convertToFileType(fileType_t resultType, sound_t* sound) {
-  if(resultType == CS229) {
-    waveToCs229(sound);
-  }
-  else if(resultType == WAVE) {
-    cs229ToWave(sound);
-  }
-}
 
 /**
   Concatenate numSounds sounds from the sound_t* array and put the resulting

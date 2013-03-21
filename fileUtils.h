@@ -9,6 +9,11 @@ sound_t* loadSound(FILE* file, char* fileName);
 sound_t* loadEmptySound();
 void unloadSound(sound_t* sound);
 void getFileType(FILE* file, sound_t* sound);
+/** 
+  Convert file to another file type. If file is already the correct type it does
+  not do anything.
+*/
+void convertToFileType(fileType_t resultType, sound_t* sound);
 void cs229ToWave(sound_t* sound);
 void waveToCs229(sound_t* sound);
 void ensureBitDepth(sound_t* s1, sound_t* s2);

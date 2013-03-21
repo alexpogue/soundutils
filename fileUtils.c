@@ -111,6 +111,15 @@ void getFileType(FILE* file, sound_t* sound) {
   return;
 }
 
+void convertToFileType(fileType_t resultType, sound_t* sound) {
+  if(resultType == CS229) {
+    waveToCs229(sound);
+  }
+  else if(resultType == WAVE) {
+    cs229ToWave(sound);
+  }
+}
+
 void cs229ToWave(sound_t* sound) {
   signed char* charData = (signed char*)sound->rawData;
   if(sound->fileType == WAVE) {
