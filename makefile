@@ -1,10 +1,16 @@
-all: sndcat sndinfo
+all: sndinfo sndcat sndchan
 
 sndcat: sndcat.o fileUtils.o cs229Utils.o fileReader.o waveUtils.o errorPrinter.o
 	gcc sndcat.o fileUtils.o cs229Utils.o fileReader.o waveUtils.o errorPrinter.o -o sndcat
 
 sndinfo: sndinfo.o fileUtils.o fileReader.o errorPrinter.o waveUtils.o cs229Utils.o
 	gcc sndinfo.o fileUtils.o fileReader.o errorPrinter.o waveUtils.o cs229Utils.o -o sndinfo
+
+sndchan: sndchan.o errorPrinter.o fileUtils.o fileReader.o waveUtils.o cs229Utils.o
+	gcc sndchan.o errorPrinter.o fileUtils.o fileReader.o waveUtils.o cs229Utils.o -o sndchan
+
+sndchan.o: sndchan.c errorPrinter.h 
+	gcc -g -Wall -pedantic -c sndchan.c
 
 sndcat.o: sndcat.c fileUtils.h
 	gcc -g -Wall -pedantic -c sndcat.c
