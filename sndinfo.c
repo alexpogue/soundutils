@@ -101,15 +101,18 @@ void printSoundDetails(sound_t* sound) {
 }
 
 void printUsage(char* exeName) {
-  printf("Usage: %s file1 [, file2, ...]\n", exeName);
+  printf("Usage: %s file1 [, file2, ...]\n\n", exeName);
 }
 
 void printHelp(char* exeName) {
-  printf("Sndinfo Help: \n");
+  printf("Sndinfo Help:\n");
   printUsage(exeName);
+
+  printf("Utility:\n");
   printf("This program reads each wav and CS229 sound file passed as\n");
-  printf("arguments and outputs their information:\n");
-  printf("Flags: \n");
+  printf("arguments and outputs their information.\n\n");
+  
+  printf("Options: \n");
   printf("-h\tdisplays this help page\n");
 } 
 

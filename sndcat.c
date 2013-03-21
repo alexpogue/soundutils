@@ -140,12 +140,24 @@ fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int ca
 
 void printHelp(char* cmd) {
   printf("Sndcat Help:\n");
-  printf("Usage %s file1 [, file2, ...] [options]\n", cmd);
-  printf("This program reads the file(s) passed as arguments, concatenates them, and writes\n");
-  printf("it to a file (defaults to stdout)\n");
+  printf("Usage: %s file1 [, file2, ...] [options]\n\n", cmd);
+
+  printf("Utility:\n");
+  printf("This program reads the CS229/WAVE file(s) passed as arguments, concatenates them,\n");
+  printf("and writes the result to a file (default:stdout , see -o option). Outputs in the\n");
+  printf("requested format (default:CS229, see -w option)\n\n");
+
+  printf("Defaults:\n");
+  printf("Default output file type is CS229 (see -w option)\n");
+  printf("Default output file is stdout unless another file is provided with -o.\n");
+  printf("If no source file(s) are provided by the arguments, input is read from stdin.\n");
+  printf("If only one source file is provided, the file is rewritten as-is in the desired\n"); 
+  printf("format. (useful for converting between formats)\n\n");
+
   printf("Options:\n");
   printf("-h\t\tdisplays this help page\n");
-  printf("-o [file]\t\toutput to a file rather than standard out\n");
+  printf("-o [file]\toutput to a file rather than standard out\n");
+  printf("-w\t\toutput in the WAVE format rather than CS229\n");
 }
  
 /** 
