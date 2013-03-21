@@ -9,7 +9,7 @@ readError_t getErrorFromSounds(sound_t** sounds, int numSounds);
 fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, char** outputFileName);
 void concatenateSoundArray(sound_t* dest, sound_t** sounds, int numSounds);
 void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType);
-void deepCopySound(sound_t* dest, sound_t src);
+void deepCopySound(sound_t* dest, sound_t* src);
 void concatenateData(sound_t* dest, sound_t* append);
 
 int main(int argc, char** argv) {
@@ -168,7 +168,7 @@ void concatenateSoundArray(sound_t* dest, sound_t** sounds, int numSounds) {
   convertToFileType(dest->fileType, sounds[0]);
   /* "un"copy the file type of sounds[0] */
   oldType = dest->fileType;
-  deepCopySound(dest, *sounds[0]);
+  deepCopySound(dest, sounds[0]);
   dest->fileType = oldType;
   for(i = 0; i < numSounds; i++) {
     convertToFileType(dest->fileType, sounds[i]);
@@ -181,33 +181,34 @@ void concatenateSoundArray(sound_t* dest, sound_t** sounds, int numSounds) {
 /**
   Copy the members of src to sound pointed to by dest.
 */
-/* TODO: pass two pointers instead */
-void deepCopySound(sound_t* dest, sound_t src) {
+void deepCopySound(sound_t* dest, sound_t* src) {
   int i;
-  char* srcCharData = (char*)src.rawData;
-  char** destCharData = (char**)&(dest->rawData);
-  void* newData = realloc(dest->rawData, src.dataSize);
-  dest->sampleRate = src.sampleRate;
-  dest->fileType = src.fileType;
-  dest->fileName = malloc(strlen(src.fileName) + 1);
-  if(!dest->fileName) {
+  char *destCharData, *srcCharData, *newFileName;
+  void* newData;
+  srcCharData = (char*)src->rawData;
+  dest->sampleRate = src->sampleRate;
+  dest->fileType = src->fileType;
+  newFileName = realloc(dest->fileName, strlen(src->fileName) + 1);
+  if(!newFileName) {
     dest->error = ERROR_MEMORY;
     return;
   }
-  strcpy(dest->fileName, src.fileName);
-  
+  dest->fileName = newFileName;
+  strcpy(dest->fileName, src->fileName);
+  newData = realloc(dest->rawData, src->dataSize);
   if(!newData) {
     dest->error = ERROR_MEMORY;
     return;
   }
   dest->rawData = newData;
-  for(i = 0; i < src.dataSize; i++) {
-    (*destCharData)[i] = srcCharData[i];
+  destCharData = (char*)dest->rawData;
+  for(i = 0; i < src->dataSize; i++) {
+    destCharData[i] = srcCharData[i];
   }
-  dest->dataSize = src.dataSize;
-  dest->error = src.error;
-  dest->numChannels = src.numChannels;
-  dest->bitDepth = src.bitDepth;
+  dest->dataSize = src->dataSize;
+  dest->error = src->error;
+  dest->numChannels = src->numChannels;
+  dest->bitDepth = src->bitDepth;
 }
 
 /**
