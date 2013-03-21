@@ -77,3 +77,7 @@ void printNoValueError() {
 void printSampleDataError() {
   fprintf(stderr, "Corrupted sample data in the file\n");
 }
+
+void printSampleRateError() {
+  fpritnf(stderr, "Incompatible sample rates in sounds\n");
+}

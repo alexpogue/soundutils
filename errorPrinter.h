@@ -62,4 +62,9 @@ void printNoValueError();
 */
 void printSampleDataError();
 
+/**
+  Prints error when we try to combine sounds with different sample rates
+*/
+void printSampleRateError();
+
 #endif
