@@ -163,12 +163,30 @@ void waveToCs229(sound_t* sound) {
   sound->fileType = CS229;
 }
 
-int ensureSoundsCombinable(sound_t* s1, sound_t* s2) {
+int ensureSoundChannelsCombinable(sound_t* s1, sound_t* s2, fileType_t resultType) {
+  if(ensureSoundsCombinable(s1, s2, resultType) == -1) {
+    return -1;
+  }
+  ensureChannelLength(s1, s2);
+  return 0;
+}
+
+
+int ensureSoundsCanConcatenate(sound_t* s1, sound_t* s2, fileType_t resultType) {
+  if(ensureSoundsCombinable(s1, s2, resultType) == -1) {
+    return -1;
+  }
+  ensureNumChannels(s1, s2);
+  return 0;
+}
+
+int ensureSoundsCombinable(sound_t* s1, sound_t* s2, fileType_t resultType) {
   if(s1->sampleRate != s2->sampleRate) {
     return -1;
   }
+  convertToFileType(resultType, s1);
+  convertToFileType(resultType, s2);
   ensureBitDepth(s1, s2);
-  ensureNumChannels(s1, s2);
   return 0;
 }
 
@@ -212,10 +230,16 @@ void addDataToEndOfSound(sound_t* sound, unsigned int numData) {
 void addSample(sound_t* sound) {
   int i;
   unsigned int totalDataElements = calculateTotalDataElements(sound);
-  if(sound->bitDepth == 8) {
+  if(sound->bitDepth == 8 && sound->fileType == CS229) {
     char* charData = (char*)sound->rawData;
     for(i = 0; i < sound->numChannels; i++) {
-      charData[totalDataElements + i] = 0;
+      charData[totalDataElements + i] = -127;
+    }
+  }
+  else if(sound->bitDepth == 8 && sound->fileType == WAVE) {
+    unsigned char* uCharData = (unsigned char*)sound->rawData;
+    for(i = 0; i < sound->numChannels; i++) {
+      uCharData[totalDataElements + i] = 0;
     }
   }
   else if(sound->bitDepth == 16) {
@@ -302,7 +326,7 @@ void addZeroedChannels(int howMany, sound_t* sound) {
     signed char* charData = (signed char*)sound->rawData;
     for(i = newLastIndex; i >= newNumChannels - 1; i-=(newNumChannels) ) {
       for(k = 0; k < howMany; k++) {
-        charData[i-k] = 0;
+        charData[i-k] = -127;
       }
       for(k = i - howMany; k > i - newNumChannels; k--) {
         charData[k] = charData[--j];

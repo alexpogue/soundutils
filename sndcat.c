@@ -216,17 +216,12 @@ void deepCopySound(sound_t* dest, sound_t* src) {
   format specified by resultType 
 */
 void concatenateSounds(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType) {
-  convertToFileType(resultType, s1);
-  convertToFileType(resultType, s2);
-  if(s1->sampleRate != s2->sampleRate) {
+  if(ensureSoundsCanConcatenate(s1, s2, resultType) == -1) {
     printSampleRateError();
     return;
   }
-  ensureBitDepth(s1, s2);
   dest->bitDepth = s1->bitDepth;
-  ensureNumChannels(s1, s2);
   dest->numChannels = s1->numChannels;
-
   concatenateData(s1, s2);
   dest->sampleRate = s1->sampleRate;
   dest->fileType = resultType;

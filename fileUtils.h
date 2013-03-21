@@ -9,6 +9,7 @@ sound_t* loadSound(FILE* file, char* fileName);
 sound_t* loadEmptySound();
 void unloadSound(sound_t* sound);
 void getFileType(FILE* file, sound_t* sound);
+
 /** 
   Convert file to another file type. If file is already the correct type it does
   not do anything.
@@ -16,11 +17,24 @@ void getFileType(FILE* file, sound_t* sound);
 void convertToFileType(fileType_t resultType, sound_t* sound);
 void cs229ToWave(sound_t* sound);
 void waveToCs229(sound_t* sound);
+
 /**
-  Matches up the bitDepth and numChannels of s1 and s2. Returns 0 on success, 
-  and -1 if the sampleRates are not the same.
+  Ensures bitDepths and numChannels are the same, converts them to resultType.  
+  Returns 0 on success and -1 if sampleRates are not the same.
+*/
+int ensureSoundsCanConcatenate(sound_t* s1, sound_t* s2, fileType_t resultType);
+
+/**
+  Matches up the bitDepth of s1 and s2 and converts both to resultType. Returns
+  0 on success, and -1 if the sampleRates are not the same.
 */ 
-int ensureSoundsCombinable(sound_t* s1, sound_t* s2);
+int ensureSoundsCombinable(sound_t* s1, sound_t* s2, fileType_t resultType);
+
+/**
+  Ensures bitDepths and channel length are the same, converts them to resultType.  
+  Returns 0 on success and -1 if sampleRates are not the same.
+*/
+int ensureSoundChannelsCombinable(sound_t* s1, sound_t* s2, fileType_t resultType);
 void ensureBitDepth(sound_t* s1, sound_t* s2);
 void ensureNumChannels(sound_t* s1, sound_t* s2);
 void ensureChannelLength(sound_t* s1, sound_t* s2);

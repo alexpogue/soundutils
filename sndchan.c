@@ -4,8 +4,6 @@
 #include "fileTypes.h"
 #include "fileUtils.h"
 
-/* TODO: FIX UNDEFINED REFERENCE ERROR */
-
 void printHelp(char* cmd);
 fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, long* outputChannel, char** outputFileName);
 
@@ -28,9 +26,6 @@ int main(int argc, char** argv) {
     exit(1);
   }
   outputType = handleCommandLineArgs(argc, argv, fileNames, fileLimit, &numFiles, &outputChannel, &outputFileName);
-  for(i = 0; i < numFiles; i++) {
-    printf("filename %d: %s\n", i, fileNames[i]);
-  }
   if(numFiles == -1) {
     /* means we printed help or invalid option */
     free(fileNames);
@@ -107,6 +102,20 @@ fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int ca
   }
   return outputType;
 }
+
+void combineChannels(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType) {
+  if(ensureSoundChannelsCombinable(s1, s2, resultType) == -1) {
+    printSampleRateError();
+    return;
+  }
+  dest->bitDepth = s1->bitDepth;
+  dest->numChannels = s1->numChannels;
+  dest->sampleRate = s1->sampleRate;
+  dest->fileType = resultType;
+  /*TODO: combine channels here */
+
+}
+
 
 void printHelp(char* cmd) {
   printf("Sndchan Help:\n");
