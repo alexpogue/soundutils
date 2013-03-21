@@ -10,6 +10,10 @@
 #include <string.h>
 #include <limits.h>
 
+void addDataToEndOfSound(sound_t* sound, unsigned int numData);
+void addSample(sound_t* sound); 
+unsigned int calculateTotalDataElements(sound_t* sound);
+
 /** 
   Returns an allocated but empty sound_t*. Must manually call methods to 
   extract file data into the sound_t*. Returns NULL on memory error. 
@@ -170,6 +174,46 @@ void ensureNumChannels(sound_t* s1, sound_t* s2) {
   }
 }
 
+void ensureChannelLength(sound_t* s1, sound_t* s2) {
+  unsigned int numDataPerChannelS1 = calculateNumSamples(s1); 
+  unsigned int numDataPerChannelS2 = calculateNumSamples(s2);
+  if(numDataPerChannelS1 > numDataPerChannelS2) {
+    unsigned int numDataToAdd = numDataPerChannelS1 - numDataPerChannelS2;
+    addDataToEndOfSound(s2, numDataToAdd);
+  }
+  else if(numDataPerChannelS2 > numDataPerChannelS1) {
+    unsigned int numDataToAdd = numDataPerChannelS2 - numDataPerChannelS1;
+    addDataToEndOfSound(s1, numDataToAdd);
+  }
+}
+
+void addDataToEndOfSound(sound_t* sound, unsigned int numData) {
+  while(numData--) addSample(sound);
+}
+
+void addSample(sound_t* sound) {
+  int i;
+  unsigned int totalDataElements = calculateTotalDataElements(sound);
+  if(sound->bitDepth == 8) {
+    char* charData = (char*)sound->rawData;
+    for(i = 0; i < sound->numChannels; i++) {
+      charData[totalDataElements + i] = 0;
+    }
+  }
+  else if(sound->bitDepth == 16) {
+    short* shortData = (short*)sound->rawData;
+    for(i = 0; i < sound->numChannels; i++) {
+      shortData[totalDataElements + i] = 0;
+    }
+  }
+  else if(sound->bitDepth == 32) {
+    long* longData = (long*)sound->rawData;
+    for(i = 0; i < sound->numChannels; i++) {
+      longData[totalDataElements + i] = 0;
+    }
+  }
+} 
+
 float ipow(int base, int exp) {
   int i; 
   float origBase, fBase;
@@ -189,7 +233,7 @@ float ipow(int base, int exp) {
 void scaleBitDepth(int target, sound_t* sound) {
   float sampleMultiplier = ipow(2, target) / ipow(2, sound->bitDepth);
   int i;
-  int numDataElements = calculateNumSamples(sound) * sound->numChannels;
+  int numDataElements = calculateTotalDataElements(sound);
   if(sound->bitDepth == 8) {
     char* charData = (char*)sound->rawData;
     for(i = 0; i < numDataElements; i++) {
@@ -308,6 +352,10 @@ unsigned int calculateByteRate(sound_t* sound) {
 float calculateSoundLength(sound_t* sound) {
   if(sound->error != NO_ERROR || calculateByteRate(sound) == 0) return 0;
   return (float)sound->dataSize / calculateByteRate(sound);
+}
+
+unsigned int calculateTotalDataElements(sound_t* sound) {
+  return calculateNumSamples(sound) * sound->numChannels;
 }
 
 /*TODO: TEST */
