@@ -16,6 +16,11 @@ void getFileType(FILE* file, sound_t* sound);
 void convertToFileType(fileType_t resultType, sound_t* sound);
 void cs229ToWave(sound_t* sound);
 void waveToCs229(sound_t* sound);
+/**
+  Matches up the bitDepth and numChannels of s1 and s2. Returns 0 on success, 
+  and -1 if the sampleRates are not the same.
+*/ 
+int ensureSoundsCombinable(sound_t* s1, sound_t* s2);
 void ensureBitDepth(sound_t* s1, sound_t* s2);
 void ensureNumChannels(sound_t* s1, sound_t* s2);
 void ensureChannelLength(sound_t* s1, sound_t* s2);

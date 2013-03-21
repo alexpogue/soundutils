@@ -79,5 +79,5 @@ void printSampleDataError() {
 }
 
 void printSampleRateError() {
-  fpritnf(stderr, "Incompatible sample rates in sounds\n");
+  fprintf(stderr, "Incompatible sample rates in sounds\n");
 }

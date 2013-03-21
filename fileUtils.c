@@ -163,6 +163,15 @@ void waveToCs229(sound_t* sound) {
   sound->fileType = CS229;
 }
 
+int ensureSoundsCombinable(sound_t* s1, sound_t* s2) {
+  if(s1->sampleRate != s2->sampleRate) {
+    return -1;
+  }
+  ensureBitDepth(s1, s2);
+  ensureNumChannels(s1, s2);
+  return 0;
+}
+
 void ensureBitDepth(sound_t* s1, sound_t* s2) {
   if(s1->bitDepth > s2->bitDepth) {    
     scaleBitDepth(s1->bitDepth, s2);
