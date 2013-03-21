@@ -360,6 +360,36 @@ void addZeroedChannels(int howMany, sound_t* sound) {
   }
   sound->dataSize = newSize;
   sound->numChannels = newNumChannels;
+}
+
+void deepCopySound(sound_t* dest, sound_t* src) {
+  int i;
+  char *destCharData, *srcCharData, *newFileName;
+  void* newData;
+  srcCharData = (char*)src->rawData;
+  dest->sampleRate = src->sampleRate;
+  dest->fileType = src->fileType;
+  newFileName = realloc(dest->fileName, strlen(src->fileName) + 1);
+  if(!newFileName) {
+    dest->error = ERROR_MEMORY;
+    return;
+  }
+  dest->fileName = newFileName;
+  strcpy(dest->fileName, src->fileName);
+  newData = realloc(dest->rawData, src->dataSize);
+  if(!newData) {
+    dest->error = ERROR_MEMORY;
+    return;
+  }
+  dest->rawData = newData;
+  destCharData = (char*)dest->rawData;
+  for(i = 0; i < src->dataSize; i++) {
+    destCharData[i] = srcCharData[i];
+  }
+  dest->dataSize = src->dataSize;
+  dest->error = src->error;
+  dest->numChannels = src->numChannels;
+  dest->bitDepth = src->bitDepth;
 } 
 
 writeError_t writeSoundToFile(sound_t* sound, FILE* fp, fileType_t outputType) { 

@@ -9,7 +9,6 @@ readError_t getErrorFromSounds(sound_t** sounds, int numSounds);
 fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, char** outputFileName);
 void concatenateSoundArray(sound_t* dest, sound_t** sounds, int numSounds);
 void concatenateSounds(sound_t* s1, sound_t* s2, fileType_t resultType);
-void deepCopySound(sound_t* dest, sound_t* src);
 void concatenateData(sound_t* dest, sound_t* append);
 
 int main(int argc, char** argv) {
@@ -178,38 +177,7 @@ void concatenateSoundArray(sound_t* dest, sound_t** sounds, int numSounds) {
   }
 }
 
-/**
-  Copy the members of src to sound pointed to by dest.
-*/
-void deepCopySound(sound_t* dest, sound_t* src) {
-  int i;
-  char *destCharData, *srcCharData, *newFileName;
-  void* newData;
-  srcCharData = (char*)src->rawData;
-  dest->sampleRate = src->sampleRate;
-  dest->fileType = src->fileType;
-  newFileName = realloc(dest->fileName, strlen(src->fileName) + 1);
-  if(!newFileName) {
-    dest->error = ERROR_MEMORY;
-    return;
-  }
-  dest->fileName = newFileName;
-  strcpy(dest->fileName, src->fileName);
-  newData = realloc(dest->rawData, src->dataSize);
-  if(!newData) {
-    dest->error = ERROR_MEMORY;
-    return;
-  }
-  dest->rawData = newData;
-  destCharData = (char*)dest->rawData;
-  for(i = 0; i < src->dataSize; i++) {
-    destCharData[i] = srcCharData[i];
-  }
-  dest->dataSize = src->dataSize;
-  dest->error = src->error;
-  dest->numChannels = src->numChannels;
-  dest->bitDepth = src->bitDepth;
-}
+
 
 /**
   concatenate sounds and store the concatenated sound into dest. Use the
