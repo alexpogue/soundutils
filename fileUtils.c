@@ -283,10 +283,54 @@ float ipow(int base, int exp) {
   return fBase;
 }
 
+void convertToBitsPerData(int bitsPerData, sound_t* sound ) {
+  unsigned int numDataElements = calculateTotalDataElements(sound);
+  if(sound->bitDepth == bitsPerData) {
+    return;
+  }
+  if(sound->bitDepth > bitsPerData) {
+    /* TODO: REMOVE TEST PRINT */
+    printf("Programmer: you tried to convert bitDepth down.");
+    return;
+  }
+  if(sound->bitDepth == 8) {
+    char* charData = (char*)sound->rawData;
+    if(bitsPerData == 16) {
+      short* shortData = malloc(sizeof(short) * numDataElements);
+      while(numDataElements--) {
+        shortData[numDataElements] = (short)charData[numDataElements];
+      }
+      sound->rawData = shortData;
+    }
+    else if(bitsPerData == 32) {
+      long* longData = malloc(sizeof(long) * numDataElements);
+      while(numDataElements--) {
+        longData[numDataElements] = (long)charData[numDataElements];
+      }
+      sound->rawData = longData;
+      free(charData);
+    }
+  }
+  else if(sound->bitDepth == 16) {
+    short* shortData = (short*)sound->rawData;
+    if(bitsPerData == 32) {
+      long* longData = malloc(sizeof(long) * numDataElements);
+      while(numDataElements--) {
+        longData[numDataElements] = (long)shortData[numDataElements];
+      }
+      sound->rawData = longData;
+      free(shortData);
+    }
+  }
+  sound->dataSize *= bitsPerData / sound->bitDepth;
+  sound->bitDepth *= bitsPerData / sound->bitDepth;
+}
+
 void scaleBitDepth(int target, sound_t* sound) {
   float sampleMultiplier = ipow(2, target) / ipow(2, sound->bitDepth);
   int i;
-  int numDataElements = calculateTotalDataElements(sound);
+  unsigned int numDataElements = calculateTotalDataElements(sound);
+  convertToBitsPerData(target, sound);
   if(sound->bitDepth == 8) {
     char* charData = (char*)sound->rawData;
     for(i = 0; i < numDataElements; i++) {
