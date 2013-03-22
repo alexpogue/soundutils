@@ -8,6 +8,7 @@ void printHelp(char* cmd);
 fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, long* outputChannel, char** outputFileName);
 void distributeIntoChannels(sound_t* dest, sound_t* src);
 void combineChannels(sound_t* s1, sound_t* s2, fileType_t resultType);
+void combineChannelsSoundArray(sound_t* dest, sound_t** sounds, int numSounds);
 
 int main(int argc, char** argv) {
   fileType_t outputType;
@@ -67,8 +68,10 @@ int main(int argc, char** argv) {
     sounds[i] = loadSound(fp, fileNames[i]);
     fclose(fp);
   }
-  combineChannels(sounds[0], sounds[1], outputType);
-  writeSoundToFile(sounds[0], outputFile, outputType);
+  dest = loadEmptySound();
+  dest->fileType = outputType;
+  combineChannelsSoundArray(dest, sounds, numFiles); 
+  writeSoundToFile(dest, outputFile, outputType);
   fclose(outputFile);
   for(i = 0; i < numFiles; i++) {
     unloadSound(sounds[i]);
@@ -77,8 +80,6 @@ int main(int argc, char** argv) {
   free(fileNames);
   return 0;
 }
-
-
 
 fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, long* outputChannel, char** outputFileName) {
   int i;
@@ -119,6 +120,17 @@ fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int ca
   return outputType;
 }
 
+void combineChannelsSoundArray(sound_t* dest, sound_t** sounds, int numSounds) {
+  int i;
+  for(i = 0; i < numSounds; i++) {
+    convertToFileType(dest->fileType, sounds[i]);
+  }
+  deepCopySound(dest, sounds[0]);
+  for(i = 1; i < numSounds; i++) {
+    combineChannels(dest, sounds[i], dest->fileType);
+  }
+}
+
 void combineChannels(sound_t* s1, sound_t* s2, fileType_t resultType) {
   if(ensureSoundChannelsCombinable(s1, s2, resultType) == -1) {
     printSampleRateError();
@@ -131,14 +143,12 @@ void distributeIntoChannels(sound_t* dest, sound_t* append) {
   int i, j, numSamples, bytesPerDestSample, bytesPerAppendSample;
   void* newData = realloc(dest->rawData, dest->dataSize);
   char *destCharData, *appendCharData;
-  short* destShortData;
   if(!newData) {
     dest->error = ERROR_MEMORY;
     return;
   }
   dest->rawData = newData;
   appendCharData = (char*)append->rawData;
-  destShortData = (short*)dest->rawData;
   /* add channels to make space for append's data */
   addZeroedChannels(append->numChannels, dest);
   destCharData = (char*)dest->rawData;
