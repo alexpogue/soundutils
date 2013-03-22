@@ -40,6 +40,9 @@ void ensureNumChannels(sound_t* s1, sound_t* s2);
 void ensureChannelLength(sound_t* s1, sound_t* s2);
 void scaleBitDepth(int target, sound_t* sound);
 void addZeroedChannels(int howMany, sound_t* sound);
+/**
+  Copy the members of src to sound pointed to by dest.
+*/
 void deepCopySound(sound_t* dest, sound_t* src);
 unsigned int calculateNumSamples(sound_t* sound);
 float calculateSoundLength(sound_t* sound);

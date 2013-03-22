@@ -10,8 +10,8 @@
 #include <string.h>
 #include <limits.h>
 
-void addDataToEndOfSound(sound_t* sound, unsigned int numData);
-void addSample(sound_t* sound); 
+void addSamplesToEndOfSound(sound_t* sound, unsigned int numData);
+void addSample(sound_t* sound, unsigned int sampleIndex); 
 unsigned int calculateTotalDataElements(sound_t* sound);
 
 /** 
@@ -214,44 +214,55 @@ void ensureChannelLength(sound_t* s1, sound_t* s2) {
   unsigned int numDataPerChannelS2 = calculateNumSamples(s2);
   if(numDataPerChannelS1 > numDataPerChannelS2) {
     unsigned int numDataToAdd = numDataPerChannelS1 - numDataPerChannelS2;
-    addDataToEndOfSound(s2, numDataToAdd);
+    addSamplesToEndOfSound(s2, numDataToAdd);
   }
   else if(numDataPerChannelS2 > numDataPerChannelS1) {
     unsigned int numDataToAdd = numDataPerChannelS2 - numDataPerChannelS1;
-    addDataToEndOfSound(s1, numDataToAdd);
+    addSamplesToEndOfSound(s1, numDataToAdd);
   }
 }
 
-void addDataToEndOfSound(sound_t* sound, unsigned int numData) {
-  sound->dataSize += numData;
-  while(numData--) addSample(sound);
+void addSamplesToEndOfSound(sound_t* sound, unsigned int numSamples) {
+  void* newData;
+  unsigned int addedDataSize = numSamples * sound->numChannels * sound->bitDepth / 8;
+  unsigned int totalDataElements;
+  sound->dataSize += addedDataSize;
+  totalDataElements = calculateTotalDataElements(sound);
+  newData = realloc(sound->rawData, sound->dataSize);
+  if(!newData) {
+    sound->error = ERROR_MEMORY;
+  }
+  sound->rawData = newData;
+  while(numSamples) {
+    addSample(sound, calculateNumSamples(sound) - numSamples--);
+  }
 }
 
-void addSample(sound_t* sound) {
+/*TODO: fix this */
+void addSample(sound_t* sound, unsigned int sampleIndex) {
   int i;
-  unsigned int totalDataElements = calculateTotalDataElements(sound);
   if(sound->bitDepth == 8 && sound->fileType == CS229) {
     char* charData = (char*)sound->rawData;
     for(i = 0; i < sound->numChannels; i++) {
-      charData[totalDataElements + i] = -127;
+      charData[sampleIndex * sound->numChannels + i] = 0;
     }
   }
   else if(sound->bitDepth == 8 && sound->fileType == WAVE) {
     unsigned char* uCharData = (unsigned char*)sound->rawData;
     for(i = 0; i < sound->numChannels; i++) {
-      uCharData[totalDataElements + i] = 0;
+      uCharData[sampleIndex * sound->numChannels + i] = 127;
     }
   }
   else if(sound->bitDepth == 16) {
     short* shortData = (short*)sound->rawData;
     for(i = 0; i < sound->numChannels; i++) {
-      shortData[totalDataElements + i] = 0;
+      shortData[sampleIndex * sound->numChannels + i] = 0;
     }
   }
   else if(sound->bitDepth == 32) {
     long* longData = (long*)sound->rawData;
     for(i = 0; i < sound->numChannels; i++) {
-      longData[totalDataElements + i] = 0;
+      longData[sampleIndex * sound->numChannels + i] = 0;
     }
   }
 } 
@@ -315,7 +326,7 @@ void addZeroedChannels(int howMany, sound_t* sound) {
     unsigned char* uCharData = (unsigned char*)sound->rawData;
     for(i = newLastIndex; i >= newNumChannels - 1; i-=(newNumChannels) ) {
       for(k = 0; k < howMany; k++) {
-        uCharData[i-k] = 0;
+        uCharData[i-k] = 127;
       }
       for(k = i - howMany; k > i - newNumChannels; k--) {
         uCharData[k] = uCharData[--j];
@@ -326,7 +337,7 @@ void addZeroedChannels(int howMany, sound_t* sound) {
     signed char* charData = (signed char*)sound->rawData;
     for(i = newLastIndex; i >= newNumChannels - 1; i-=(newNumChannels) ) {
       for(k = 0; k < howMany; k++) {
-        charData[i-k] = -127;
+        charData[i-k] = 0;
       }
       for(k = i - howMany; k > i - newNumChannels; k--) {
         charData[k] = charData[--j];
