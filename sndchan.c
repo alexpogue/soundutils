@@ -6,9 +6,12 @@
 
 void printHelp(char* cmd);
 fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, long* outputChannel, char** outputFileName);
+void distributeIntoChannels(sound_t* dest, sound_t* src);
+void combineChannels(sound_t* s1, sound_t* s2, fileType_t resultType);
 
 int main(int argc, char** argv) {
   fileType_t outputType;
+  FILE* outputFile;
   char isInputStdin, *outputFileName, **fileNames;
   int fileLimit, numFiles;
   long outputChannel;
@@ -44,6 +47,14 @@ int main(int argc, char** argv) {
   if(isInputStdin) {
     sounds[0] = loadSound(stdin, "StdinSound");
   }
+  outputFile = fopen(outputFileName, "wb");
+  if(!outputFile) {
+    free(fileNames);
+    free(sounds);
+    printFileOpenError(outputFileName);
+    exit(1);
+  }
+
   for(i = 0; i < numFiles && !isInputStdin; i++) {
     FILE* fp;
     fp = fopen(fileNames[i], "rb");
@@ -56,6 +67,8 @@ int main(int argc, char** argv) {
     sounds[i] = loadSound(fp, fileNames[i]);
     fclose(fp);
   }
+  combineChannels(sounds[0], sounds[1], outputType);
+  writeSoundToFile(sounds[0], outputFile, outputType);
   for(i = 0; i < numFiles; i++) {
     unloadSound(sounds[i]);
   }
@@ -63,6 +76,8 @@ int main(int argc, char** argv) {
   free(fileNames);
   return 0;
 }
+
+
 
 fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, long* outputChannel, char** outputFileName) {
   int i;
@@ -103,19 +118,39 @@ fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int ca
   return outputType;
 }
 
-void combineChannels(sound_t* s1, sound_t* s2, sound_t* dest, fileType_t resultType) {
+void combineChannels(sound_t* s1, sound_t* s2, fileType_t resultType) {
   if(ensureSoundChannelsCombinable(s1, s2, resultType) == -1) {
     printSampleRateError();
     return;
   }
-  dest->bitDepth = s1->bitDepth;
-  dest->numChannels = s1->numChannels;
-  dest->sampleRate = s1->sampleRate;
-  dest->fileType = resultType;
-  /*TODO: combine channels here */
-
+  distributeIntoChannels(s1, s2);
 }
 
+void distributeIntoChannels(sound_t* dest, sound_t* append) {
+  int i, j, numSamples, bytesPerDestSample, bytesPerAppendSample;
+  void* newData = realloc(dest->rawData, dest->dataSize);
+  char *destCharData, *appendCharData;
+  short* destShortData;
+  if(!newData) {
+    dest->error = ERROR_MEMORY;
+    return;
+  }
+  dest->rawData = newData;
+  appendCharData = (char*)append->rawData;
+  destShortData = (short*)dest->rawData;
+  /* add channels to make space for append's data */
+  addZeroedChannels(append->numChannels, dest);
+  destCharData = (char*)dest->rawData;
+  numSamples = calculateNumSamples(dest);
+  bytesPerDestSample = dest->numChannels * append->bitDepth / 8;
+  bytesPerAppendSample = append->numChannels * append->bitDepth / 8;
+  for(i = 0; i < numSamples; i++) {
+    int firstNewData = bytesPerDestSample * (i + 1) - bytesPerAppendSample;
+    for(j = 0; j < bytesPerAppendSample; j++) {
+      destCharData[firstNewData + j] = appendCharData[i * bytesPerAppendSample + j];
+    }
+  }
+}
 
 void printHelp(char* cmd) {
   printf("Sndchan Help:\n");
