@@ -5,7 +5,7 @@
 #include "fileUtils.h"
 
 void printHelp(char* cmd);
-fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, long* outputChannel, char** outputFileName);
+fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, int* outputChannel, char** outputFileName);
 void distributeIntoChannels(sound_t* dest, sound_t* src);
 void combineChannels(sound_t* s1, sound_t* s2, fileType_t resultType);
 void combineChannelsSoundArray(sound_t* dest, sound_t** sounds, int numSounds);
@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
   FILE* outputFile;
   char isInputStdin, *outputFileName, **fileNames;
   int fileLimit, numFiles;
-  long outputChannel;
+  int outputChannel;
   sound_t *dest, **sounds;
   int i;
   isInputStdin = 0;
@@ -71,8 +71,12 @@ int main(int argc, char** argv) {
   dest = loadEmptySound();
   dest->fileType = outputType;
   combineChannelsSoundArray(dest, sounds, numFiles); 
+  if(outputChannel > -1) {
+    isolateChannel(dest, outputChannel);
+  }
   writeSoundToFile(dest, outputFile, outputType);
   fclose(outputFile);
+  unloadSound(dest);
   for(i = 0; i < numFiles; i++) {
     unloadSound(sounds[i]);
   }
@@ -81,7 +85,7 @@ int main(int argc, char** argv) {
   return 0;
 }
 
-fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, long* outputChannel, char** outputFileName) {
+fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, int* outputChannel, char** outputFileName) {
   int i;
   /* will be reset to WAV if we see -w option */
   fileType_t outputType = CS229;

@@ -40,6 +40,7 @@ void ensureNumChannels(sound_t* s1, sound_t* s2);
 void ensureChannelLength(sound_t* s1, sound_t* s2);
 void scaleBitDepth(int target, sound_t* sound);
 void addZeroedChannels(int howMany, sound_t* sound);
+void isolateChannel(sound_t* sound, unsigned int channelNum);
 /**
   Copy the members of src to sound pointed to by dest.
 */

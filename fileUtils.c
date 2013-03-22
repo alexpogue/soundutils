@@ -225,9 +225,7 @@ void ensureChannelLength(sound_t* s1, sound_t* s2) {
 void addSamplesToEndOfSound(sound_t* sound, unsigned int numSamples) {
   void* newData;
   unsigned int addedDataSize = numSamples * sound->numChannels * sound->bitDepth / 8;
-  unsigned int totalDataElements;
   sound->dataSize += addedDataSize;
-  totalDataElements = calculateTotalDataElements(sound);
   newData = realloc(sound->rawData, sound->dataSize);
   if(!newData) {
     sound->error = ERROR_MEMORY;
@@ -415,6 +413,31 @@ void addZeroedChannels(int howMany, sound_t* sound) {
   }
   sound->dataSize = newSize;
   sound->numChannels = newNumChannels;
+}
+
+void isolateChannel(sound_t* sound, unsigned int channelNum) {
+  int i, j, newDataSize;
+  void* newData;
+  char* charData = (char*)sound->rawData;
+  int bytesPerData = sound->bitDepth / 8;
+  int numSamples = calculateNumSamples(sound);
+  if(sound->numChannels == 1) {
+    return;
+  }
+  for(i = 0; i < numSamples; i++) {
+    for(j = 0; j < bytesPerData; j++) {
+      charData[i * bytesPerData + j] = charData[(i * sound->numChannels + channelNum) * bytesPerData + j];
+    }
+  }
+  newDataSize = numSamples * bytesPerData;
+  newData = realloc(sound->rawData, newDataSize);
+  if(!newData) {
+    sound->error = ERROR_MEMORY;
+    return;
+  }
+  sound->rawData = newData;
+  sound->dataSize = newDataSize;
+  sound->numChannels = 1;
 }
 
 void deepCopySound(sound_t* dest, sound_t* src) {
