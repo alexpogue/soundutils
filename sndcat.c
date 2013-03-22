@@ -31,6 +31,7 @@ int main(int argc, char** argv) {
   outputType = handleCommandLineArgs(argc, argv, fileNames, fileLimit, &numFiles, &outputFileName);
   /* numFiles of -1 means we printed help or had an invalid option */
   if(numFiles == -1) {
+    free(fileNames);
     exit(0);
   }
   if(numFiles == 0) {

@@ -72,6 +72,7 @@ int main(int argc, char* argv[]) {
         exit(1);
       }
       if(autoLoadedSound->error != NO_ERROR) {
+        fprintf(stderr, "\n");
         printErrorsInSound(autoLoadedSound);
       }
       else {

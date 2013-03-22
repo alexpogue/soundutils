@@ -5,7 +5,8 @@ void printErrorsInSound(sound_t* sound) {
   if(sound->error == NO_ERROR) {
     return;
   }
-  else if(sound->error == ERROR_EOF) {
+  fprintf(stderr, "Error in file: %s\n", sound->fileName);
+  if(sound->error == ERROR_EOF) {
     printEofError();
   }
   else if(sound->error == ERROR_READING) {
