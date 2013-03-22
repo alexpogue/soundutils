@@ -69,6 +69,7 @@ int main(int argc, char** argv) {
   }
   combineChannels(sounds[0], sounds[1], outputType);
   writeSoundToFile(sounds[0], outputFile, outputType);
+  fclose(outputFile);
   for(i = 0; i < numFiles; i++) {
     unloadSound(sounds[i]);
   }
