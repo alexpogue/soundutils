@@ -102,7 +102,7 @@ void printSoundDetails(sound_t* sound) {
 }
 
 void printUsage(char* exeName) {
-  printf("Usage: %s file1 [, file2, ...]\n\n", exeName);
+  printf("Usage: %s file1 [file2 ...]\n\n", exeName);
 }
 
 void printHelp(char* exeName) {

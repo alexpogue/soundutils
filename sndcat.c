@@ -138,7 +138,7 @@ fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int ca
 
 void printHelp(char* cmd) {
   printf("Sndcat Help:\n");
-  printf("Usage: %s file1 [, file2, ...] [options]\n\n", cmd);
+  printf("Usage: %s file1 [file2 ...] [options]\n\n", cmd);
 
   printf("Utility:\n");
   printf("This program reads the CS229/WAVE file(s) passed as arguments, concatenates them,\n");

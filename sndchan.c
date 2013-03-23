@@ -174,7 +174,7 @@ void distributeIntoChannels(sound_t* dest, sound_t* append) {
 
 void printHelp(char* cmd) {
   printf("Sndchan Help:\n");
-  printf("Usage: %s file1 [, file2, ...] [options]\n\n", cmd);
+  printf("Usage: %s file1 [file2 ...] [options]\n\n", cmd);
   
   printf("Utility:\n");
   printf("This program reads the files passed as arguments and combines the channels of\n");
