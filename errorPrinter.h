@@ -67,4 +67,9 @@ void printSampleDataError();
 */
 void printSampleRateError();
 
+/**
+  Prints error when channels == zero
+*/
+void printZeroChannelsError();
+
 #endif
