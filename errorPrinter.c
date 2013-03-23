@@ -30,6 +30,9 @@ void printErrorsInSound(sound_t* sound) {
   else if(sound->error == ERROR_SAMPLE_DATA) {
     printSampleDataError();
   }
+  else if(sound->error == ERROR_ZERO_CHANNELS) {
+    printZeroChannelsError();
+  }
   else {
     printf("Unforeseen error occurred!\n");
   }
@@ -81,4 +84,8 @@ void printSampleDataError() {
 
 void printSampleRateError() {
   fprintf(stderr, "Incompatible sample rates in sounds\n");
+}
+
+void printZeroChannelsError() {
+  fprintf(stderr, "Sound is either empty or incorrectly zero channels\n");
 }
