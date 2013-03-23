@@ -23,8 +23,10 @@ typedef enum {
   CS229_NO_ERROR,
   CS229_DONE_READING,
   CS229_ERROR_EOF,
-  CS229_ERROR_INVALID_VALUE,
-  CS229_ERROR_READING
+  CS229_ERROR_INVALID_DATA,
+  CS229_ERROR_READING,
+  CS229_ERROR_NOT_ENOUGH_DATA,
+  CS229_ERROR_TOO_MUCH_DATA
 } cs229ReadStatus_t;
 
 typedef struct {
@@ -90,7 +92,12 @@ keyword_t readKeywordValue(cs229Data_t* cd, FILE* fp);
 /**
   Translates cd over to sound
 */
-void cs229ToSound(cs229Data_t* cd, sound_t* sound);
+void cs229ToSound(cs229Data_t* cd, sound_t* sound, cs229ReadStatus_t status);
+
+/** 
+  Convert status to its best-fit readError_t. 
+*/
+readError_t cs229ReadStatusToReadError(cs229ReadStatus_t status);
 
 /**
   Calculates the data size from numsamples, numchannels, and bitdepth
@@ -113,7 +120,7 @@ void toLowerCase(char* p, size_t num) {
 void cs229Read(FILE* fp, sound_t* sound) {
   cs229Data_t* cData = malloc(sizeof(cs229Data_t));
   keyword_t keyword;
-  cs229ReadStatus_t sampleReadStatus;
+  cs229ReadStatus_t sampleReadStatus = CS229_NO_ERROR;
   long bytesAvailable = 16;
   long bytesUsed = 0;
   int samplesRead = 0;
@@ -145,6 +152,11 @@ void cs229Read(FILE* fp, sound_t* sound) {
     int bytesPerSample = cData->numChannels * cData->bitres / 8;
     int sampleLimit;
     bytesAvailable *= 2;
+    if(bytesPerSample == 0) {
+      /* to prevent divide by zero error */
+      sound->error = ERROR_ZERO_CHANNELS;
+      break;
+    }
     sampleLimit = bytesAvailable / bytesPerSample;
     newData = realloc(cData->data, bytesAvailable);
     if(!newData) {
@@ -154,30 +166,55 @@ void cs229Read(FILE* fp, sound_t* sound) {
     }
     cData->data = newData;
     sampleReadStatus = readSamples(cData, sampleLimit, &samplesRead, fp);
-  } while(sampleReadStatus != CS229_DONE_READING && sound->error == NO_ERROR);
+  } while(sampleReadStatus == CS229_NO_ERROR && sound->error == NO_ERROR);
   cData->numSamples = samplesRead;
   bytesUsed = samplesRead * cData->numChannels * cData->bitres / 8;
-    /* reallocate to fix overestimation of data size from do/while loop */
+  /* reallocate to fix overestimation of data size from do/while loop */
   newData = realloc(cData->data, bytesUsed);
   if(!newData && bytesUsed > 0) {
     sound->error = ERROR_MEMORY;
     free(cData);
     return;
   }
-  bytesAvailable = bytesUsed;
   cData->data = newData;
       
-  cs229ToSound(cData, sound);
+  cs229ToSound(cData, sound, sampleReadStatus);
   free(cData);
 }
 
-void cs229ToSound(cs229Data_t* cd, sound_t* sound) {
+void cs229ToSound(cs229Data_t* cd, sound_t* sound, cs229ReadStatus_t status) {
   sound->sampleRate = cd->sampleRate;
   sound->numChannels = cd->numChannels;
   sound->bitDepth = cd->bitres;
   sound->dataSize = calculateDataSize(cd);
   sound->rawData = cd->data;
+  if(sound->error == NO_ERROR) {
+    sound->error = cs229ReadStatusToReadError(status);
+  }
 }
+
+readError_t cs229ReadStatusToReadError(cs229ReadStatus_t status) {
+  if(status == CS229_NO_ERROR || status == CS229_DONE_READING) {
+    return NO_ERROR;
+  }
+  else if(status == CS229_ERROR_EOF) {
+    return ERROR_EOF; 
+  }
+  else if(status == CS229_ERROR_INVALID_DATA 
+    || status == CS229_ERROR_NOT_ENOUGH_DATA
+    || status == CS229_ERROR_TOO_MUCH_DATA) {
+    return ERROR_SAMPLE_DATA;
+  }
+  else if(status == CS229_ERROR_READING) {
+    return ERROR_READING;
+  }
+  else {
+    fprintf(stderr, "Unhandled cs229ReadStatus_t enum value\n");
+    return ERROR_READING;
+  }
+}
+
+
 
 unsigned int calculateDataSize(cs229Data_t* cd) {
   if(cd->numChannels == 0 || cd->bitres == 0) return 0;
@@ -204,7 +241,7 @@ signed char longToChar(long makeMeAChar) {
 
 unsigned int longToUShort(unsigned long makeMeAUShort) {
   if(makeMeAUShort > USHRT_MAX) {
-    printf("%ld is out of ushort range", makeMeAUShort);
+    printf("%ld is out of ushort range\n", makeMeAUShort);
     return !makeMeAUShort;
   }
   return (unsigned int)makeMeAUShort;
@@ -212,12 +249,11 @@ unsigned int longToUShort(unsigned long makeMeAUShort) {
 
 unsigned char longToUChar(unsigned long makeMeAUChar) {
   if(makeMeAUChar > UCHAR_MAX) {
-    printf("%ld is out of uchar range", makeMeAUChar);
+    printf("%ld is out of uchar range\n", makeMeAUChar);
     return !makeMeAUChar;
   }
   return (unsigned char)makeMeAUChar;
 }
-
 
 keyword_t storeKeywordValue(char* keywordStr, char* valueStr, cs229Data_t* cd) {
   keyword_t kw;
@@ -297,7 +333,7 @@ keyword_t strToKeyword(char* str) {
   else if(strcmp(str, "startdata") == 0) {
     return KEYWORD_STARTDATA;
   }
-  else if(strcmp(str, "#") == 0) {
+  else if(str[0] == '#') {
     return KEYWORD_COMMENT;
   }
   else {
@@ -336,9 +372,18 @@ readError_t getKeywordValue(char* keyword, size_t keywordLen, char* value, size_
     value[0] = 0; /* null first value char to show value was not found */
     return NO_ERROR;
   }
-  else if(finalChar == '\n' && (length == 1 || keyword[0] == '\r')) {
+  else if( finalChar == '\n' && (length == 1 || keyword[0] == '\r') ) {
     /* blank line, regard as comment */
     keyword[0] = '#';
+    return NO_ERROR;
+  }
+  else if( ((finalChar == ' ' || finalChar == '\t') && length == 1) || keyword[0] == '#') {
+    /* line started with whitespace or began with a #, also regard as comment */
+    keyword[0] = '#';
+    error = ignoreLine(fp);
+    if(error != NO_ERROR) {
+      return error;
+    }
     return NO_ERROR;
   }
 
@@ -435,7 +480,15 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
     length = strlen(dataStr);
     lastChar = dataStr[length-1];
     if(lastChar != ' ' && lastChar != '\t' && lastChar != '\n') {
-      return CS229_ERROR_INVALID_VALUE;
+      return CS229_ERROR_INVALID_DATA;
+    }
+    if(lastChar == '\n' && i != cd->numChannels - 1) {
+      /* premature newline */
+      return CS229_ERROR_NOT_ENOUGH_DATA;
+    }
+    else if(lastChar != '\n' && lastChar != '\t' && lastChar != ' '  && i == cd->numChannels - 1) {
+      /* late newline */
+      return CS229_ERROR_TOO_MUCH_DATA;
     }
     dataStr[length-1] = 0;
     if(length > 2 && dataStr[length-2] == '\r') { 
@@ -445,19 +498,19 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
     valLong = strtol(dataStr, &afterNumber, 10);
     if(dataStr[0] == '\0' || afterNumber[0] != '\0') {
       /* not a valid number */
-      return CS229_ERROR_INVALID_VALUE;
+      return CS229_ERROR_INVALID_DATA;
     }
     switch(cd->bitres) {
       case 8:
         dataChars = (char*)cd->data;
         valChar = longToChar(valLong);
-        if(valChar != valLong) return CS229_ERROR_INVALID_VALUE;
+        if(valChar != valLong) return CS229_ERROR_INVALID_DATA;
         dataChars[index + i] = valChar;
         break;
       case 16:
         dataShorts = (short*)cd->data;
         valShort = longToShort(valLong);
-        if(valShort != longToShort(valLong)) return CS229_ERROR_INVALID_VALUE;
+        if(valShort != longToShort(valLong)) return CS229_ERROR_INVALID_DATA;
         dataShorts[index + i] = valShort;
         break;
       case 32:
@@ -466,7 +519,7 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
         break;
       default:
         /* we should have caught invalid bitres before calling this function */
-        return CS229_ERROR_INVALID_VALUE;
+        return CS229_ERROR_INVALID_DATA;
     }
   }
   if(lastChar != '\n') {
