@@ -23,7 +23,9 @@ typedef enum {
   /* no value given in cs229 file */
   ERROR_NO_VALUE,
   /* error reading sample data in cs229 file */
-  ERROR_SAMPLE_DATA
+  ERROR_SAMPLE_DATA,
+  /* found zero channels, don't read the file */
+  ERROR_ZERO_CHANNELS
 } readError_t;
 
 #endif
