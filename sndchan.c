@@ -48,12 +48,17 @@ int main(int argc, char** argv) {
   if(isInputStdin) {
     sounds[0] = loadSound(stdin, "StdinSound");
   }
-  outputFile = fopen(outputFileName, "wb");
-  if(!outputFile) {
-    free(fileNames);
-    free(sounds);
-    printFileOpenError(outputFileName);
-    exit(1);
+  if(outputFileName == NULL) {
+    outputFile = stdout;
+  }
+  else {
+    outputFile = fopen(outputFileName, "wb");
+    if(!outputFile) {
+      free(fileNames);
+      free(sounds);
+      printFileOpenError(outputFileName);
+      exit(1);
+    }
   }
 
   for(i = 0; i < numFiles && !isInputStdin; i++) {
