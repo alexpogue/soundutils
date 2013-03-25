@@ -467,6 +467,8 @@ cs229ReadStatus_t readSample(cs229Data_t* cd, int index, FILE* fp) {
   short* dataShorts;
   long* dataLongs;
 
+  lastChar = 0;
+
   for(i = 0; i < (cd->numChannels); i++) {
     /* to reach the next sample data */
     error = readUntilNonWhitespace(&dataStr[0], fp);
@@ -567,6 +569,7 @@ int getMaxCharsIn32Bit() {
 
 int getMaxCharsPerSample(sound_t* sound) {
   int maxCharsInEachNum, charsForAllNums, charsForSpaces, charsForNewline;
+  maxCharsInEachNum = 0;
   if(sound->bitDepth == 8) {
     maxCharsInEachNum = getMaxCharsIn8Bit();
   }

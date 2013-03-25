@@ -13,31 +13,31 @@ sndchan: sndchan.o errorPrinter.o fileUtils.o fileReader.o waveUtils.o cs229Util
 	gcc sndchan.o errorPrinter.o fileUtils.o fileReader.o waveUtils.o cs229Utils.o -o sndchan
 
 sndchan.o: sndchan.c errorPrinter.h 
-	gcc -Wall -pedantic -c sndchan.c
+	gcc -O3 -Wall -pedantic -c sndchan.c
 
 sndcat.o: sndcat.c fileUtils.h
-	gcc -Wall -pedantic -c sndcat.c
+	gcc -O3 -Wall -pedantic -c sndcat.c
 
 sndinfo.o: sndinfo.c fileUtils.h fileTypes.h readError.h errorPrinter.h
-	gcc -Wall -pedantic -c sndinfo.c
+	gcc -O3 -Wall -pedantic -c sndinfo.c
 
 sndmix.o: sndmix.c fileTypes.h fileUtils.h errorPrinter.h
-	gcc -Wall -pedantic -c sndmix.c
+	gcc -O3 -Wall -pedantic -c sndmix.c
 
 fileUtils.o: fileUtils.c fileUtils.h fileReader.h fileTypes.h waveUtils.h readError.h cs229Utils.h writeError.h
-	gcc -Wall -pedantic -c fileUtils.c
+	gcc -O3 -Wall -pedantic -c fileUtils.c
 
 fileReader.o: fileReader.c fileReader.h readError.h
-	gcc -Wall -pedantic -c fileReader.c
+	gcc -O3 -Wall -pedantic -c fileReader.c
 
 errorPrinter.o: errorPrinter.c errorPrinter.h
-	gcc -Wall -pedantic -c errorPrinter.c
+	gcc -O3 -Wall -pedantic -c errorPrinter.c
 
 waveUtils.o: waveUtils.c waveUtils.h errorPrinter.h readError.h writeError.h
-	gcc -Wall -pedantic -c waveUtils.c
+	gcc -O3 -Wall -pedantic -c waveUtils.c
 
 cs229Utils.o: cs229Utils.c cs229Utils.h fileReader.h fileTypes.h readError.h writeError.h
-	gcc -Wall -pedantic -c cs229Utils.c
+	gcc -O3 -Wall -pedantic -c cs229Utils.c
 
 clean:
 	rm *.o
