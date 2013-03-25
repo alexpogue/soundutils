@@ -14,10 +14,8 @@ typedef struct {
   fileType_t fileType;
   char* fileName;
   void* rawData;
-  /* TODO: change this to long because int is not guaranteed to be 32 bits */
   unsigned int dataSize;
   readError_t error;
-  /* TODO: Change these to chars, max numChannels is 128, max bitdepth is 32 */
   unsigned short numChannels;
   unsigned short bitDepth;
 } sound_t;
