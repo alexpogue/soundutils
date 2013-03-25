@@ -4,11 +4,34 @@
 #include "fileUtils.h"
 #include "errorPrinter.h"
 
+/**
+  Print sndcat help page
+*/
 void printHelp(char* cmd);
-readError_t getErrorFromSounds(sound_t** sounds, int numSounds);
+
+/**
+  Handle arguments from the command line, fill in fileNames, numFilesRead, and
+  outputFileName, and return the desired output file type
+*/
 fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, char** outputFileName);
+
+/**
+  Concatenate numSounds sounds from the sound_t* array and put the resulting
+  sound into dest. 
+*/
 void concatenateSoundArray(sound_t* dest, sound_t** sounds, int numSounds);
+
+/**
+  Concatenate s1 and s2 and return the given resultType representation of the
+  sound. Converts sounds to proper bitDepth and numChannels before 
+  concatenating. Does not preserve s1 and s2's original sound.
+*/
 void concatenateSounds(sound_t* s1, sound_t* s2, fileType_t resultType);
+
+/**
+  Take the data from append and attach it to the end of dest. Updates the 
+  dataSize field of dest.
+*/
 void concatenateData(sound_t* dest, sound_t* append);
 
 int main(int argc, char** argv) {
@@ -150,10 +173,6 @@ void printHelp(char* cmd) {
   printf("-w\t\toutput in the WAVE format rather than CS229\n");
 }
 
-/**
-  Concatenate numSounds sounds from the sound_t* array and put the resulting
-  sound into dest. 
-*/
 void concatenateSoundArray(sound_t* dest, sound_t** sounds, int numSounds) {
   int i;
   fileType_t oldType;
@@ -196,13 +215,6 @@ void concatenateData(sound_t* dest, sound_t* append) {
     return;
   }
   dest->rawData = newData;
-  if(dest->fileType != append->fileType 
-    || dest->sampleRate != append->sampleRate 
-    || dest->bitDepth != append->bitDepth
-    || dest->numChannels != append->numChannels) {
-    /* TODO: REMOVE THIS TEST PRINT */
-    printf("We cannot cat these two sounds!\n");
-  }
   destCharData = (char*)dest->rawData;
   appendCharData = (char*)append->rawData;
   for(i = 0; i < append->dataSize; i++) {
