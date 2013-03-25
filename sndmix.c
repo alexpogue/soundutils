@@ -9,7 +9,7 @@
   numScalarsRead from the command line arguments. Returns the requested
   output fileType_t
 */
-fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int* numFilesRead, char* outputFileName, char** scalarStrs, int* numScalarsRead);
+fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int* numFilesRead, char** outputFileName, char** scalarStrs, int* numScalarsRead);
 
 /**
   Mixes sounds together by scaling each sample by their scalar, adding the 
@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
     free(fileNames);
     exit(1);
   }
-  outputType = handleCommandLineArgs(argc, argv, fileNames, &numFiles, outputFileName, scalarStrs, &numScalars);
+  outputType = handleCommandLineArgs(argc, argv, fileNames, &numFiles, &outputFileName, scalarStrs, &numScalars);
   if(numFiles == -1) {
     /* we printed help or encountered an invalid option */ 
     free(fileNames);
@@ -178,7 +178,6 @@ int main(int argc, char** argv) {
   }
   dest = loadEmptySound();
   dest->fileType = outputType; 
-  dest = malloc(sizeof(sound_t));
   if(!dest) {
     printMemoryError();
     free(fileNames);
@@ -211,7 +210,7 @@ int main(int argc, char** argv) {
   exit(0);
 }
 
-fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int* numFilesRead, char* outputFileName, char** scalars, int* numScalarsRead) {
+fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int* numFilesRead, char** outputFileName, char** scalars, int* numScalarsRead) {
   int i;
   char justSawScalar = 0;
   /* starts as CS229, will be converted to wav if we see -w */
@@ -224,7 +223,7 @@ fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int* n
         return outputType;
       }
       else if(argv[i][1] == 'o') {
-        outputFileName = argv[i+1];
+        *outputFileName = argv[i+1];
         /* don't reread the file name as an input file */
         ++i;
       }
