@@ -3,12 +3,18 @@
 
 #include "readError.h"
 #include "writeError.h"
-/* TODO: CONSIDER MOVING TO fileUtils.h */
+
+/**
+  Used to give a name to file type identifiers
+*/
 typedef enum {
   CS229,
   WAVE
 } fileType_t;
 
+/**
+  Used to hold all the data associated with sounds (both CS229 and WAVE)
+*/
 typedef struct {
   unsigned long sampleRate;
   fileType_t fileType;
