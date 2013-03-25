@@ -4,6 +4,7 @@
 #include "readError.h"
 #include <stdlib.h>
 #include <stdio.h>
+
 /** 
   Read n bytes from file, handles read errors, and put them in ptr. 
   Moves file pointer n positions ahead. 
