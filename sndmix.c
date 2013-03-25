@@ -4,18 +4,78 @@
 #include "fileUtils.h"
 #include "errorPrinter.h"
 
+/**
+  Fills in filenames, numFilesRead, outputFileName, scalarStrs, and 
+  numScalarsRead from the command line arguments. Returns the requested
+  output fileType_t
+*/
 fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int* numFilesRead, char* outputFileName, char** scalarStrs, int* numScalarsRead);
+
+/**
+  Mixes sounds together by scaling each sample by their scalar, adding the 
+  sounds' sample data together mathematically, and placing the resulting file
+  into dest.
+*/
 void mixSounds(sound_t* dest, sound_t** sounds, float* scalars, int numSounds);
+
+/**
+  Converts the string array strings to floats and place the result into floats.
+  Only read up to numData, and return 0 if we encounter an error, otherwise
+  return 1;
+*/
 char stringsToFloats(char** strings, float* floats, unsigned int numData);
+
+/**
+  Scales the sample data of sound by the given scalar.
+*/
 void scaleSampleData(sound_t* sound, float scalar);
+
+/**
+  Scales numChars chars from char array by the given scalar.
+*/
 void scaleChars(char* chars, int numChars, float scalar);
-void scaleShorts(short* shorts, int numChars, float scalar);
-void scaleLongs(long* longs, int numChars, float scalar);
+
+/**
+  Scales numShorts shorts from short array by the given scalar.
+*/
+void scaleShorts(short* shorts, int numShorts, float scalar);
+
+/**
+  Scales numLongs longs from long array by the given scalar.
+*/
+void scaleLongs(long* longs, int numLongs, float scalar);
+
+/**
+  Mathematically adds the sample data of the the two sounds (dest and addend)
+  and stores the result in dest. This function allows overflow and is expected
+  to receive values that will not overflow
+*/
 void addSampleData(sound_t* dest, sound_t* addend);
+
+/**
+  Prints message when we receive too many files by command line.
+*/
 void printTooManyFilesError();
+
+/**
+  Prints message when we receive too many scalars by command line.
+*/
 void printTooManyScalarsError();
+
+/**
+  Prints error message when we cannot successfully convert command line 
+  arguments to scalar floats.
+*/
 void printScalarConversionError();
+
+/**
+  Prints the usage of this utility without any newlines.
+*/
 void printUsage(char* cmd);
+
+/**
+  Prints fully-formatted help screen and displays on stdout.
+*/
 void printHelp(char* cmd);
 
 int main(int argc, char** argv) {
