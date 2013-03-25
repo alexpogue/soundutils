@@ -4,10 +4,33 @@
 #include "fileTypes.h"
 #include "fileUtils.h"
 
+/**
+  Displays the fully-formatted help screen to the user via stdout
+*/
 void printHelp(char* cmd);
+
+/**
+  Handles the command line arguments by reading them and filling in fileNames, 
+  numFilesRead, outputChannel, and outputFileName. Returns the requested output
+  fileType_t.
+*/
 fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, int* outputChannel, char** outputFileName);
+
+/**
+  Connects the channels of dest and src and puts the result into dest. This 
+  function also ensures that the number of samples are the same for each sound.
+*/
 void distributeIntoChannels(sound_t* dest, sound_t* src);
+
+/**
+  Combines the channels of s1 and s2 with the given resultType.
+*/
 void combineChannels(sound_t* s1, sound_t* s2, fileType_t resultType);
+
+/**
+  Combines the channels of numSounds sounds in the sounds array and places the
+  result into dest. Outputs in the filetype given by dest->fileType
+*/
 void combineChannelsSoundArray(sound_t* dest, sound_t** sounds, int numSounds);
 
 int main(int argc, char** argv) {
