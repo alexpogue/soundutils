@@ -42,5 +42,5 @@ cs229Utils.o: cs229Utils.c cs229Utils.h fileReader.h fileTypes.h readError.h wri
 clean:
 	rm *.o
 
-project.tar.gz: makefile cs229Utils.c cs229Utils.h errorPrinter.c errorPrinter.h fileReader.c fileReader.h fileTypes.h fileUtils.c fileUtils.h readError.h sndcat.c sndchan.c sndinfo.c sndmix.c waveUtils.c waveUtils.h writeError.h
-	tar -czf project.tar.gz makefile cs229Utils.c cs229Utils.h errorPrinter.c errorPrinter.h fileReader.c fileReader.h fileTypes.h fileUtils.c fileUtils.h readError.h sndcat.c sndchan.c sndinfo.c sndmix.c waveUtils.c waveUtils.h writeError.h
+project.tar.gz: makefile cs229Utils.c cs229Utils.h errorPrinter.c errorPrinter.h fileReader.c fileReader.h fileTypes.h fileUtils.c fileUtils.h readError.h sndcat.c sndchan.c sndinfo.c sndmix.c waveUtils.c waveUtils.h writeError.h README
+	tar -czf project.tar.gz makefile cs229Utils.c cs229Utils.h errorPrinter.c errorPrinter.h fileReader.c fileReader.h fileTypes.h fileUtils.c fileUtils.h readError.h sndcat.c sndchan.c sndinfo.c sndmix.c waveUtils.c waveUtils.h writeError.h README
