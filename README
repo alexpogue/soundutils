@@ -1,0 +1,75 @@
+CS229 Project 1 README
+
+OVERVIEW:
+
+  The sound utilities in this package read, manipulate, and write files in the 
+  CS229 and WAVE file format. 
+
+BUILDING:
+
+  To build all utilities, use the "make" command
+
+  Utilities can be built individually using "make [utilName]", for example to
+  make sndinfo, we write "make sndinfo"
+
+UTILITIES:
+
+  sndinfo:
+    This program reads each wav and CS229 sound file passed as command line
+    arguments and outputs their information.
+    
+    Options:
+    -h  displays program's help page
+  
+  sndcat:
+    This program reads the CS229/WAVE file(s) passed as arguments, concatenates
+    them, and writes the result to a file (default:stdout , see -o option). 
+    Outputs in the requested format (default:CS229, see -w option)
+
+    Defaults:
+    Default output file type is CS229 (see -w option)
+    Default output file is stdout unless another file is provided with -o
+    If no source file(s) are provided by the arguments, input is read from stdin
+    If only one source file is provided, the file is rewritten as-is in the 
+    desired format. (useful for converting between formats)
+
+    Options:
+    -h          displays the help page
+    -o [file]   output to a file rather than standard out
+    -w          output in the WAVE format rather than CS229
+  
+  sndchan:
+    This program reads the files passed as arguments and combines the channels 
+    of them into a single sound. The resulting sound will be the "overlay" of 
+    the source sounds.
+  
+    Defaults:
+    Default output is in CS229 format (see -w option to change).
+    Default output is to stdout unless another file is given (with -o)
+    If no source files are given, tries to read file from stdin
+
+    Options:
+    -c [n]          Only include channel n in output (1st channel = 0, etc.)
+    -h              Print the help screen
+    -o [fileName]   Output file to fileName
+    -w              Output in WAVE format
+
+  sndmix:
+    This program reads the files passed as arguments, scales the sample data by
+    their "mult", then adds together their sample data to make a single sound.
+
+    If the sounds have unequal channels, zeroed out channels will be added to 
+    the one with fewer channels.
+    If the sounds have different bit depths, the smaller samples are scaled up 
+    to match the larger ones.
+  
+    Defaults:
+    Default output is in CS229 format (see -w option to change).
+    Default output is to stdout unless another file is given (see -o)
+    If no source files are given, file is read from stdin
+
+    Options:
+    -h              Print the help screen
+    -o [fileName]   Output file to fileName
+    -w              Output in WAVE format
+

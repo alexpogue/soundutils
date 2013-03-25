@@ -61,47 +61,39 @@ int main(int argc, char** argv) {
     fclose(fp);
   }
   free(fileNames);
-  if(getErrorFromSounds(sounds, numFiles) == NO_ERROR) {
-    dest = loadEmptySound();
-    dest->fileType = outputType;
-    concatenateSoundArray(dest, sounds, numFiles);
-
-    if(outputFileName == NULL) {
-      writeSoundToFile(dest, stdout, outputType);
-    }
-    else {
-      FILE* fp;
-      fp = fopen(outputFileName, "wb");
-      if(!fp) {
-        printFileOpenError(outputFileName);
-        free(sounds);
-        exit(1);
-      }
-      writeSoundToFile(dest, fp, outputType);
-      fclose(fp);
-    }
-  
-    unloadSound(dest);
-  }
-  else {
+  if(getErrorFromSounds(sounds, numFiles) != NO_ERROR) {
     for(i = 0; i < numFiles; i++) {
       printErrorsInSound(sounds[i]);
     }
+    free(sounds);
+    exit(1);
   }
+  dest = loadEmptySound();
+  dest->fileType = outputType;
+  concatenateSoundArray(dest, sounds, numFiles);
+
+  if(outputFileName == NULL) {
+    writeSoundToFile(dest, stdout, outputType);
+  }
+  else {
+    FILE* fp;
+    fp = fopen(outputFileName, "wb");
+    if(!fp) {
+      printFileOpenError(outputFileName);
+      free(sounds);
+      unloadSound(dest);
+      fclose(fp);
+      exit(1);
+    }
+    writeSoundToFile(dest, fp, outputType);
+    fclose(fp);
+  } 
+  unloadSound(dest);
   for(i = 0; i < numFiles; i++) {
     unloadSound(sounds[i]);
   }
   free(sounds);
   return 0;
-}
-
-readError_t getErrorFromSounds(sound_t** sounds, int numSounds) {
-  while(numSounds) {
-    if(sounds[--numSounds]->error != NO_ERROR) {
-      return sounds[numSounds]->error;
-    }
-  }
-  return NO_ERROR;
 }
 
 fileType_t handleCommandLineArgs(int argc, char** argv, char** fileNames, int capacity, int* numFilesRead, char** outputFileName) {

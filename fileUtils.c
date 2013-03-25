@@ -107,7 +107,6 @@ void getFileType(FILE* file, sound_t* sound) {
       sound->error = ERROR_FILETYPE;
     }
   }
-  /* trim MIN_VALUE samples to MIN_VALUE + 1 (ex. -128 samples to -127, -32768 to -32767, etc.) */
   return;
 }
 
@@ -176,6 +175,15 @@ int ensureSoundsCanConcatenate(sound_t* s1, sound_t* s2, fileType_t resultType) 
     return -1;
   }
   ensureNumChannels(s1, s2);
+  return 0;
+}
+
+int ensureSoundsMixable(sound_t* s1, sound_t* s2, fileType_t resultType) {
+  if(ensureSoundsCombinable(s1, s2, resultType) == -1) {
+    return -1;
+  }
+  ensureNumChannels(s1, s2);
+  ensureChannelLength(s1, s2);
   return 0;
 }
 
@@ -478,6 +486,15 @@ writeError_t writeSoundToFile(sound_t* sound, FILE* fp, fileType_t outputType) {
     writeWaveFile(sound, fp);
   }
   return 0;
+}
+
+readError_t getErrorFromSounds(sound_t** sounds, int numSounds) {
+  while(numSounds) {
+    if(sounds[--numSounds]->error != NO_ERROR) {
+      return sounds[numSounds]->error;
+    }
+  }
+  return NO_ERROR;
 }
 
 unsigned int calculateNumSamples(sound_t* sound) {

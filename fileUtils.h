@@ -31,6 +31,12 @@ int ensureSoundsCanConcatenate(sound_t* s1, sound_t* s2, fileType_t resultType);
 int ensureSoundsCombinable(sound_t* s1, sound_t* s2, fileType_t resultType);
 
 /**
+  Ensures bitDepths, numChannels, and NumSamples are the same, converts them to
+  result type. Returns 0 on success and -1 if sampleRates are not the same.
+*/
+int ensureSoundsMixable(sound_t* s1, sound_t* s2, fileType_t resultType);
+
+/**
   Ensures bitDepths and channel length are the same, converts them to resultType.  
   Returns 0 on success and -1 if sampleRates are not the same.
 */
@@ -45,8 +51,13 @@ void isolateChannel(sound_t* sound, unsigned int channelNum);
   Copy the members of src to sound pointed to by dest.
 */
 void deepCopySound(sound_t* dest, sound_t* src);
+readError_t getErrorFromSounds(sound_t** sounds, int numSounds);
 unsigned int calculateNumSamples(sound_t* sound);
 float calculateSoundLength(sound_t* sound);
+/**
+  Calculates total data elements in sound sample data.
+*/
+unsigned int calculateTotalDataElements(sound_t* sound);
 writeError_t writeSoundToFile(sound_t* sound, FILE* fp, fileType_t outputType);
 
 /* TODO: TEST */
