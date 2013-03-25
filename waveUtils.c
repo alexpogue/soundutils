@@ -151,14 +151,22 @@ void wavReadDataChunk(FILE* fp, wavData_t* wd) {
 void wavReadSoundData(FILE* fp, wavData_t* wd) {
   if(wd->error != NO_ERROR) return;
   wd->error = readBytes(wd->data, wd->dataChunkSize, fp);
+  if(wd->dataChunkSize % 2 != 0) {
+    /* ignore padding byte if dataChunk is odd */
+    readBytes(wd->data, 1, fp);
+  }
 }
   
 void wavIgnoreChunk(FILE* fp, wavData_t* wd) {
   size_t chunkSize;
   if(wd->error != NO_ERROR) return;
+  /* read chunk size from the first 4 bytes */
   wd->error = readBytes(&chunkSize, 4, fp);
   if(wd->error != NO_ERROR) return;
   wavIgnoreBytes(fp, chunkSize);
+  if(chunkSize % 2 != 0) {
+    wavIgnoreBytes(fp, 1);
+  }
 }
 
 void wavIgnoreBytes(FILE* fp, size_t num) {
@@ -285,6 +293,14 @@ writeError_t writeDataChunk(sound_t* sound, FILE* fp) {
   }
   if(fwrite(charData, 1, sound->dataSize, fp) != sound->dataSize) {
     return WRITE_ERROR_TOO_FEW_CHARS;
+  }
+  
+  if(sound->dataSize % 2 != 0) {
+    char data = 0;
+    /* write an extra padding byte */
+    if(fwrite(&data, 1, 1, fp) != 1) {
+      return WRITE_ERROR_TOO_FEW_CHARS;
+    }
   }
   return WRITE_SUCCESS;
 }
