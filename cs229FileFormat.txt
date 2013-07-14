@@ -1,0 +1,66 @@
+From the assignment description by Dr. Andrew Miner 
+(his website: http://www.cs.iastate.edu/~asminer)
+
+CS229 file format
+
+The .cs229 sound format is a plain text file (probably the only sound format 
+ever to use plain text). Be sure that you can handle text files created both 
+in UNIX and in DOS. The intention of the format is to be flexible enough to be
+easy to use, yet rigid enough to be easy for your programs to read. For the most
+part, the file consists of keywords and values, both of which are guaranteed to
+be "contiguous" text. Keywords may be upper, lower, or mixed case. A file is 
+structured as follows:
+
+CS229
+<header>
+StartData
+<samples>
+<EOF>
+
+where "CS229" and "StartData" are keywords, and "<EOF>" means "end of file". 
+Note that the keyword "CS229" appears at the very beginning of the file. The 
+"<header>" section consists of zero or more lines formatted in one of these 
+three ways.
+
+  1. Blank (should be ignored)
+  2. Starting with "#" (should be ignored)
+  3. "keyword (whitespace) (value)" where (whitespace) refers to any number of
+     tabs and spaces, and (value) refers to an integer. Legal keywords are: 
+     SampleRate, Samples, Channels, BitRes.
+
+The "<samples>" section consists of a line for each sample, where each sample 
+is of the form "(value)1 (whitespace) (value)2 ... (value)c"
+
+  * The sample rate (SampleRate), number of channels (Channels), and bit depth
+    (BitRes) must be specified. The number of samples (Samples) is optional.
+  * The values specified for each sample are signed integers and are in the 
+    appropriate range for the bit depth. For example, if the bit depth is 8, 
+    then the legal range for all sample data is from -127 to 127.
+  * If the number of samples is specified, then there must be exactly that much
+    sample data in the file.
+
+The file shown in Figure 3 is an example of a legal .cs229 file.
+
+ _____________________________________________________________________________
+|                                                                             |
+| Cs229                                                                       |
+|                                                                             |
+| # A really short sound to illustrate this file format                       |
+|                                                                             |
+| Samples     4                                                               |
+| # We are doing something bizarre with the channels?                         |
+| channels    3                                                               |
+|                                                                             |
+| BitRes      8                                                               |
+|                                                                             |
+| # Because we can                                                            |
+| SaMpLeRaTe  11025                                                           |
+|                                                                             |
+| # From here on things are more rigid                                        |
+| STARTdata                                                                   |
+| 0   -127  127                                                               |
+| 10  45    -103                                                              |
+| 20  83    -4                                                                |
+| 30  0     99                                                                |
+|_____________________________________________________________________________|
+                      Figure 3: An example .cs229 file                       
