@@ -12,6 +12,10 @@ BUILDING:
   Utilities can be built individually using "make [utilName]", for example to
   make sndinfo, we write "make sndinfo"
 
+LICENSE:
+
+  This software is licensed under the MIT License (see LICENSE.txt).
+
 UTILITIES:
 
   sndinfo:
